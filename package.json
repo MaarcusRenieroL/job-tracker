@@ -6,6 +6,11 @@
     "lint-staged": "^17.6.2"
   },
   "scripts": {
-    "install-hooks": "git config --local core.hooksPath .githooks"
+    "install-hooks": "git config --local core.hooksPath .githooks",
+    "lint": "./apps/web/node_modules/.bin/oxlint .",
+    "typecheck": "pnpm -r run typecheck",
+    "test": "pnpm -r run test",
+    "build": "pnpm -r run build",
+    "ci": "pnpm lint && pnpm typecheck && pnpm test && pnpm build"
   }
 }

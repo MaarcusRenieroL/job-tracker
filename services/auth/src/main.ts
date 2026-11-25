@@ -18,7 +18,7 @@ const mongo = new MongoClient(
 const authDb = mongo.db("job_tracker_auth");
 
 const users = authDb.collection<User>("users");
-await users.createIndex({ email: 1 }, { unique: true });
+await users.createIndex({ email: 1 }, { unique: true }, undefined);
 
 app.get("/ready", async (c) => {
   try {
