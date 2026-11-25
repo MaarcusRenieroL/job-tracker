@@ -1,6 +1,7 @@
+import { resumeMatch } from "../src/applications/resume-match.js";
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { exactTagFilter, resumeMatch } from "../src/applications/procedures.js";
+import { exactTagFilter } from "../src/applications/procedures.js";
 import { applicationSchema, updateSchema } from "../src/applications/schema.js";
 
 test("saving an application requires valid posting fields and rejects client ownership", () => {
@@ -69,7 +70,6 @@ test("priority, tags, assessments and offer deadlines validate on create and pat
     true,
   );
 });
-
 
 test("tag filters treat regular expression characters literally", () => {
   for (const tag of ["C++", "a.b", "[remote]", "R&D", "C#"]) {
