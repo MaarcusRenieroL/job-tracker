@@ -1,6 +1,8 @@
 import { serve } from "@hono/node-server";
 import { Hono } from "hono";
 import { MongoClient } from "mongodb";
+import { createAuthRoutes } from "./auth/routes.js";
+import type { User } from "./auth/procedures.js";
 
 const app = new Hono();
 const mongo = new MongoClient(
@@ -11,6 +13,9 @@ const mongo = new MongoClient(
 );
 
 const authDb = mongo.db("job_tracker_auth");
+
+const users = authDb.collection<User>("users");
+await users.createIndex({ email: 1 }, { unique: true });
 
 app.get("/ready", async (c) => {
   try {
@@ -23,5 +28,7 @@ app.get("/ready", async (c) => {
 });
 
 app.get("/health", (c) => c.json({ service: "auth", status: "ok" }));
+
+app.route("/auth", createAuthRoutes(users));
 
 serve({ fetch: app.fetch, hostname: "127.0.0.1", port: 3001 });
