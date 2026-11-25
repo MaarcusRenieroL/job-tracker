@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { Button } from "@/components/ui/button";
+import { SystemScreen } from "@/components/system/system-screen";
+import { WorkspaceLoading } from "@/components/system/workspace-loading";
 import { api } from "../../lib/api";
 import type { Session } from "../auth/session";
 import { Workspace } from "../workspace/workspace";
@@ -32,20 +33,16 @@ export function ProfileGate({
   }, [session.token, retry]);
   if (error)
     return (
-      <main className="p-8">
-        <p role="alert">{error}</p>
-        <Button onPress={() => setRetry((n) => n + 1)}>Try again</Button>
-        <Button variant="ghost" onPress={signOut}>
-          Sign out
-        </Button>
-      </main>
+      <SystemScreen
+        title="We couldn’t load your profile"
+        description="Check that the app is running, then try again. If your session has expired, sign in again."
+        detail={error}
+        onRetry={() => setRetry((n) => n + 1)}
+        onSignOut={signOut}
+      />
     );
   if (profile === undefined)
-    return (
-      <main className="p-8" role="status">
-        Loading your profile…
-      </main>
-    );
+    return <WorkspaceLoading label="Loading your profile…" />;
   if (!profile)
     return (
       <Onboarding
