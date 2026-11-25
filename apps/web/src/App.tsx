@@ -6,6 +6,8 @@ import {
   Columns3,
   List,
   LogOut,
+  Moon,
+  Sun,
   Plus,
   Search,
 } from "lucide-react";
@@ -18,6 +20,45 @@ import "./App.css";
 
 type Session = { token: string; email: string };
 const sessionKey = "job-tracker-session";
+
+function ThemeToggle() {
+  const [dark, setDark] = useState(() =>
+    document.documentElement.classList.contains("dark"),
+  );
+
+  useEffect(() => {
+    const preference = matchMedia("(prefers-color-scheme: dark)");
+    const sync = (event: MediaQueryListEvent) => {
+      try {
+        if (localStorage.getItem("job-tracker-theme")) return;
+      } catch {}
+      document.documentElement.classList.toggle("dark", event.matches);
+      setDark(event.matches);
+    };
+    preference.addEventListener("change", sync);
+    return () => preference.removeEventListener("change", sync);
+  }, []);
+
+  const label = dark ? "Switch to light mode" : "Switch to dark mode";
+  return (
+    <button
+      type="button"
+      className="theme-toggle"
+      aria-label={label}
+      title={label}
+      onClick={() => {
+        const next = !dark;
+        document.documentElement.classList.toggle("dark", next);
+        setDark(next);
+        try {
+          localStorage.setItem("job-tracker-theme", next ? "dark" : "light");
+        } catch {}
+      }}
+    >
+      {dark ? <Sun size={17} /> : <Moon size={17} />}
+    </button>
+  );
+}
 
 function Brand() {
   return (
@@ -61,7 +102,10 @@ function SignIn({ onSignIn }: { onSignIn: (session: Session) => void }) {
   return (
     <main className="sign-in">
       <section className="login-panel">
-        <Brand />
+        <div className="brand-row">
+          <Brand />
+          <ThemeToggle />
+        </div>
         <div>
           <h1>{register ? "Create your account" : "Sign in to Job Tracker"}</h1>
           <p>Track applications, referrals, and interviews in one place.</p>
@@ -231,7 +275,10 @@ function Workspace({
   return (
     <div className="workspace">
       <aside className="sidebar">
-        <Brand />
+        <div className="brand-row">
+          <Brand />
+          <ThemeToggle />
+        </div>
         <nav aria-label="Workspace">
           <button
             className={page === "applications" ? "current" : ""}
