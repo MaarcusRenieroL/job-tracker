@@ -1,5 +1,11 @@
 {
   "name": "job-tracker",
   "private": true,
-  "packageManager": "pnpm@12.21.0"
+  "packageManager": "pnpm@12.21.0",
+  "devDependencies": {
+    "lint-staged": "^17.6.2"
+  },
+  "scripts": {
+    "install-hooks": "git config --local core.hooksPath .githooks"
+  }
 }
