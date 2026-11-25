@@ -1,4 +1,4 @@
-import { Algorithm, hash } from "@node-rs/argon2";
+import { Algorithm, hash, verify } from "@node-rs/argon2";
 import { MongoServerError, type Collection } from "mongodb";
 
 export type User = {
@@ -28,4 +28,18 @@ export async function registerUser(
 
     throw error;
   }
+}
+
+export async function verifyCredentials(
+  users: Collection<User>,
+  { email, password }: { email: string; password: string },
+) {
+  const normalizedEmail = email.trim().toLowerCase();
+  const user = await users.findOne({ email: normalizedEmail });
+
+  if (!user || !(await verify(user.passwordHash, password))) {
+    return null;
+  }
+
+  return { id: user._id.toHexString(), email: user.email };
 }
