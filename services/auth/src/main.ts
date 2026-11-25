@@ -52,4 +52,8 @@ const issueToken = (userId: string) =>
 
 app.route("/auth", createAuthRoutes(users, issueToken));
 
-serve({ fetch: app.fetch, hostname: "127.0.0.1", port: 3001 });
+serve({
+  fetch: app.fetch,
+  hostname: process.env.HOST ?? "127.0.0.1",
+  port: 3001,
+});

@@ -8,8 +8,9 @@ export default defineConfig({
   plugins: [react(), tailwindcss()],
   server: {
     proxy: {
-      "/auth": "http://127.0.0.1:3001",
-      "/applications": "http://127.0.0.1:3002",
+      "/auth": process.env.AUTH_URL ?? "http://127.0.0.1:3001",
+      "/applications": process.env.TRACKER_URL ?? "http://127.0.0.1:3002",
+      "/profile": process.env.TRACKER_URL ?? "http://127.0.0.1:3002",
     },
   },
   resolve: {

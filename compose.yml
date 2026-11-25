@@ -5,6 +5,76 @@ services:
       - "127.0.0.1:27017:27017"
     volumes:
       - mongo-data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "quit(db.adminCommand({ ping: 1 }).ok ? 0 : 1)"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  keys:
+    image: job-tracker-local
+    build: .
+    command:
+      - node
+      - --input-type=module
+      - -e
+      - |
+        import { generateKeyPairSync } from "node:crypto";
+        import { existsSync, writeFileSync } from "node:fs";
+        const privatePath = "/app/.local/auth-private.pem";
+        const publicPath = "/app/.local/auth-public.pem";
+        if (existsSync(privatePath) !== existsSync(publicPath)) throw new Error("Both signing key files are required.");
+        if (!existsSync(privatePath)) {
+          const { privateKey, publicKey } = generateKeyPairSync("ed25519", {
+            privateKeyEncoding: { type: "pkcs8", format: "pem" },
+            publicKeyEncoding: { type: "spki", format: "pem" },
+          });
+          writeFileSync(privatePath, privateKey, { mode: 0o600, flag: "wx" });
+          writeFileSync(publicPath, publicKey, { flag: "wx" });
+        }
+    volumes:
+      - signing-keys:/app/.local
+
+  auth:
+    image: job-tracker-local
+    command: ["pnpm", "--filter", "@job-tracker/auth", "dev"]
+    environment:
+      HOST: 0.0.0.0
+      MONGO_URI: mongodb://mongo:27017
+    volumes:
+      - signing-keys:/app/.local:ro
+    depends_on:
+      mongo:
+        condition: service_healthy
+      keys:
+        condition: service_completed_successfully
+
+  tracker:
+    image: job-tracker-local
+    command: ["pnpm", "--filter", "@job-tracker/tracker", "dev"]
+    environment:
+      HOST: 0.0.0.0
+      MONGO_URI: mongodb://mongo:27017
+    volumes:
+      - signing-keys:/app/.local:ro
+    depends_on:
+      mongo:
+        condition: service_healthy
+      keys:
+        condition: service_completed_successfully
+
+  web:
+    image: job-tracker-local
+    command: ["pnpm", "--dir", "apps/web", "exec", "vite", "--host", "0.0.0.0"]
+    environment:
+      AUTH_URL: http://auth:3001
+      TRACKER_URL: http://tracker:3002
+    ports:
+      - "127.0.0.1:5173:5173"
+    depends_on:
+      - auth
+      - tracker
 
 volumes:
   mongo-data:
+  signing-keys:
