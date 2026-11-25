@@ -70,4 +70,4 @@ All routes require the same bearer token as the existing application API.
 
 ## Import a job posting
 
-In a new application, paste a public job URL and select **Import**. Tracker extracts available details from a `JobPosting` JSON-LD record and fills empty fields for review. The application is saved only when you select **Save**. Some sites require login, block automated requests, render details in JavaScript, or omit structured data. Enter those details manually.
+In a new application, paste a public job URL and select **Import**. Tracker extracts available details from a `JobPosting` JSON-LD record or a public LinkedIn job page and fills empty fields for review. The application is saved only when you select **Save**. Some sites require login, block automated requests, render details in JavaScript, or omit structured data. Enter those details manually.

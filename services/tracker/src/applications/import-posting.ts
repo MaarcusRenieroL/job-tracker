@@ -67,6 +67,17 @@ async function fetchPage(url: URL, redirects = 0): Promise<string> {
         }
         if (status < 200 || status >= 300) {
           response.resume();
+          if (
+            status === 429 &&
+            (url.hostname === "linkedin.com" ||
+              url.hostname.endsWith(".linkedin.com"))
+          ) {
+            return reject(
+              new ImportError(
+                "LinkedIn is temporarily limiting requests. Try again later or paste the job description.",
+              ),
+            );
+          }
           return reject(
             new ImportError(`The job site returned HTTP ${status}.`),
           );
@@ -140,6 +151,18 @@ function cleanText(value: unknown, limit: number) {
   return result ? result.slice(0, limit) : undefined;
 }
 
+export function linkedInJobUrl(url: URL): URL | undefined {
+  const host = url.hostname.toLowerCase();
+  if (host !== "linkedin.com" && !host.endsWith(".linkedin.com")) return;
+  const pathMatch = url.pathname.match(/^\/jobs\/view\/(?:[^/]*-)?(\d+)\/?$/i);
+  const queryId = url.pathname.startsWith("/jobs/")
+    ? url.searchParams.get("currentJobId")
+    : null;
+  const id = pathMatch?.[1] ?? (/^\d+$/.test(queryId ?? "") ? queryId : null);
+  if (!id) return;
+  return new URL(`https://${host}/jobs/view/${id}/`);
+}
+
 export function parsePosting(html: string, sourceUrl: string) {
   const page = load(html);
   let posting: JsonObject | undefined;
@@ -151,6 +174,42 @@ export function parsePosting(html: string, sourceUrl: string) {
       /* Ignore unrelated invalid JSON-LD. */
     }
   });
+  const source = new URL(sourceUrl);
+  const isLinkedIn =
+    source.hostname.toLowerCase() === "linkedin.com" ||
+    source.hostname.toLowerCase().endsWith(".linkedin.com");
+  if (!posting && isLinkedIn) {
+    const role = cleanText(
+      page("h1.top-card-layout__title, h1.topcard__title").first().text(),
+      120,
+    );
+    const company = cleanText(
+      page(".topcard__org-name-link, .topcard__flavor-row .topcard__flavor a")
+        .first()
+        .text(),
+      120,
+    );
+    const descriptionElement = page(
+      ".description__text .show-more-less-html__markup, .show-more-less-html__markup",
+    ).first();
+    const description = cleanText(descriptionElement.html(), 24000);
+    const location = cleanText(
+      page(".topcard__flavor--bullet").first().text(),
+      3000,
+    );
+    if (role && company && description)
+      return {
+        jobUrl: sourceUrl,
+        company,
+        role,
+        description,
+        location,
+        source: "LinkedIn",
+      };
+    throw new ImportError(
+      "LinkedIn didn’t provide the full public posting. Try the employer’s page or paste the job description.",
+    );
+  }
   if (!posting)
     throw new ImportError(
       "No structured job posting found. Try the employer's job page or enter the details manually.",
@@ -184,6 +243,7 @@ export function parsePosting(html: string, sourceUrl: string) {
     : undefined;
   return {
     jobUrl: sourceUrl,
+    ...(isLinkedIn ? { source: "LinkedIn" } : {}),
     company: cleanText(organization?.name, 120),
     role: cleanText(posting.title, 120),
     description: cleanText(posting.description, 24000),
@@ -204,7 +264,15 @@ export function parsePosting(html: string, sourceUrl: string) {
 export async function importPosting(sourceUrl: string) {
   const url = new URL(sourceUrl);
   try {
-    return parsePosting(await fetchPage(url), url.href);
+    if (
+      !["http:", "https:"].includes(url.protocol) ||
+      url.username ||
+      url.password
+    ) {
+      throw new ImportError("Enter a public HTTP or HTTPS job URL.");
+    }
+    const linkedInUrl = linkedInJobUrl(url);
+    return parsePosting(await fetchPage(linkedInUrl ?? url), url.href);
   } catch (error) {
     if (error instanceof ImportError) throw error;
     throw new ImportError(
