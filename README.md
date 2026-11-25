@@ -63,3 +63,13 @@ Save the application and a referral contact before selecting **Draft message wit
 ## AI assistance
 
 Codex assisted with planning, implementation, testing, and review. Impeccable supplied frontend design guidance. The optional runtime AI feature uses the configured Ollama model.
+
+## Tracker API for priorities, assessments, agenda, and offers
+
+All routes require the same bearer token as the existing application API.
+
+- **Pipeline:** `PATCH /applications/:id` accepts `{ "version": 1, "stage": "Ghosted" }`. Use the current record version for any quick-move control. A stale version returns HTTP 409.
+- **Priority and tags:** create or patch with `priority` (`High`, `Medium`, or `Low`) and `tags` (up to 25 strings, 40 characters each). Tags are trimmed and deduplicated case-insensitively. Patch with `clear: ["priority"]` to clear priority or `tags: []` to clear tags. The list endpoint accepts combinable `stage`, `priority`, and `tag` query parameters. Tag filters match the full tag case-insensitively.
+- **Assessments:** create or patch with an `assessments` array. Each item requires a UUID `id`, `title`, `type` (`Online assessment` or `Take-home`), and `status` (`Not started`, `In progress`, `Submitted`, `Completed`, or `Cancelled`). Optional fields are `deadline`, `submittedAt` (both YYYY-MM-DD), `repoUrl` (HTTP or HTTPS), `outcome`, and `notes`. A supplied array replaces the current array.
+- **Agenda:** `GET /applications/agenda?from=2026-11-26&to=2026-12-10` returns `{ events: [] }` sorted chronologically. The boundaries are inclusive dates. The default start is the current UTC date. Events have an `id`, `applicationId`, `company`, `role`, `kind`, `title`, and `date`; scheduled interviews also have a UTC `dateTime`. Kind values are `application-deadline`, `follow-up`, `interview`, `assessment`, `referral-follow-up`, and `offer-deadline`. Closed applications, finished assessments, and cancelled interviews are excluded.
+- **Offers:** `GET /applications/offers` returns `{ offers: [] }`, newest update first. Each row has `_id`, `company`, `role`, `stage`, and the stored `offer`. Offer data supports `base`, `bonus`, `equity`, `currency`, `notes`, and an optional `deadline` (YYYY-MM-DD). Amounts remain in their original currencies.

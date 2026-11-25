@@ -1,11 +1,16 @@
 import { Hono } from "hono";
 import { bodyLimit } from "hono/body-limit";
-import type { Collection } from "mongodb";
+import type { Collection, Filter, WithId } from "mongodb";
 import { requireAuth, type TrackerEnv } from "../auth/require-auth.js";
 import { handleCreate, handleUpdate } from "./handlers.js";
 import { ownerFilter, resumeMatch } from "./procedures.js";
 import { draftReferral } from "./referral-draft.js";
-import type { Application } from "./schema.js";
+import {
+  agendaQuery,
+  applicationListQuery,
+  type Application,
+} from "./schema.js";
+import { applicationAgenda } from "./agenda.js";
 
 export function createApplicationRoutes(applications: Collection<Application>) {
   const router = new Hono<TrackerEnv>();
@@ -13,13 +18,79 @@ export function createApplicationRoutes(applications: Collection<Application>) {
 
   return router
     .get("/", async (c) => {
+      const parsed = applicationListQuery.safeParse(c.req.query());
+      if (!parsed.success)
+        return c.json(
+          { error: "Invalid application filters", issues: parsed.error.issues },
+          400,
+        );
+      const { stage, priority, tag } = parsed.data;
+      const filter: Filter<Application> = { ownerId: c.get("ownerId") };
+      if (stage) filter.stage = stage;
+      if (priority) filter.priority = priority;
+      if (tag) {
+        const escaped = tag.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        filter.tags = new RegExp(`^${escaped}$`, "i");
+      }
       const rows = await applications
-        .find({ ownerId: c.get("ownerId") })
+        .find(filter)
         .sort({ updatedAt: -1 })
         .toArray();
       return c.json({ applications: rows });
     })
     .post("/", (c) => handleCreate(c, applications))
+    .get("/agenda", async (c) => {
+      const parsed = agendaQuery.safeParse(c.req.query());
+      if (!parsed.success)
+        return c.json(
+          { error: "Invalid agenda date range", issues: parsed.error.issues },
+          400,
+        );
+
+      const { from = new Date().toISOString().slice(0, 10), to } = parsed.data;
+      if (to && from > to)
+        return c.json({ error: "from must be on or before to" }, 400);
+      const rows = await applications
+        .find({ ownerId: c.get("ownerId") })
+        .project<Parameters<typeof applicationAgenda>[0]>({
+          company: 1,
+          role: 1,
+          stage: 1,
+          deadline: 1,
+          followUp: 1,
+          interviews: 1,
+          assessments: 1,
+          referrals: 1,
+          offer: 1,
+        })
+        .toArray();
+      const events = rows
+        .flatMap((row) => applicationAgenda(row, from, to))
+        .sort(
+          (a, b) =>
+            (a.dateTime ?? a.date).localeCompare(b.dateTime ?? b.date) ||
+            a.id.localeCompare(b.id),
+        );
+      return c.json({ events });
+    })
+    .get("/offers", async (c) => {
+      const offers = await applications
+        .find({ ownerId: c.get("ownerId"), offer: { $exists: true } })
+        .project<
+          Pick<
+            WithId<Application>,
+            "_id" | "company" | "role" | "stage" | "offer"
+          >
+        >({
+          company: 1,
+          role: 1,
+          stage: 1,
+          offer: 1,
+        })
+        .sort({ updatedAt: -1 })
+        .toArray();
+      return c.json({ offers });
+    })
     .get("/missing-skills", async (c) => {
       const rows = applications
         .find({ ownerId: c.get("ownerId"), resumeText: { $exists: true } })

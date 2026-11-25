@@ -37,3 +37,35 @@ test("resume coverage weights strong, partial and missing matches and retains ev
   assert.equal(result.location?.evidence, "Senior Engineer in Bengaluru");
   assert.equal(result.seniority?.evidence, "Senior Engineer in Bengaluru");
 });
+
+test("priority, tags, assessments and offer deadlines validate on create and patch", () => {
+  const assessment = {
+    id: "d30bd509-2305-4d0d-a738-c4928deb17b0",
+    title: "API exercise",
+    type: "Take-home",
+    status: "In progress",
+    deadline: "2026-12-04",
+  };
+  const input = {
+    company: "Example",
+    role: "Engineer",
+    stage: "Ghosted",
+    priority: "High",
+    tags: [" Remote ", "remote", "backend"],
+    assessments: [assessment],
+    offer: { currency: "USD", deadline: "2026-12-12" },
+  };
+  assert.deepEqual(applicationSchema.parse(input).tags, ["remote", "backend"]);
+  assert.equal(
+    applicationSchema.safeParse({
+      ...input,
+      assessments: [assessment, assessment],
+    }).success,
+    false,
+  );
+  assert.equal(
+    updateSchema.safeParse({ version: 1, clear: ["priority"], assessments: [] })
+      .success,
+    true,
+  );
+});

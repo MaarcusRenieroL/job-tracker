@@ -11,6 +11,7 @@ export const stages = [
   "Offer",
   "Rejected",
   "Withdrawn",
+  "Ghosted",
 ] as const;
 export const stageSchema = z.enum(stages);
 const text = z.string().trim().max(3000);
@@ -58,6 +59,45 @@ export const referralSchema = z.strictObject({
   outcome: text.optional(),
 });
 
+export const prioritySchema = z.enum(["High", "Medium", "Low"]);
+export const tagSchema = z.string().trim().min(1).max(40);
+const tagsSchema = z
+  .array(tagSchema)
+  .max(25)
+  .transform((tags) => [
+    ...new Map(tags.map((tag) => [tag.toLowerCase(), tag])).values(),
+  ]);
+
+export const assessmentSchema = z.strictObject({
+  id: z.uuid(),
+  title: text.min(1).max(120),
+  type: z.enum(["Online assessment", "Take-home"]),
+  status: z.enum([
+    "Not started",
+    "In progress",
+    "Submitted",
+    "Completed",
+    "Cancelled",
+  ]),
+  deadline: date.optional(),
+  submittedAt: date.optional(),
+  repoUrl: url.optional(),
+  outcome: text.optional(),
+  notes: longText.optional(),
+});
+
+export const applicationListQuery = z.object({
+  stage: stageSchema.optional(),
+  priority: prioritySchema.optional(),
+  tag: tagSchema.optional(),
+});
+
+export const agendaQuery = z
+  .object({ from: date.optional(), to: date.optional() })
+  .refine(({ from, to }) => !from || !to || from <= to, {
+    message: "from must be on or before to",
+  });
+
 export const applicationSchema = z.strictObject({
   company: text.min(1).max(120),
   role: text.min(1).max(120),
@@ -69,6 +109,16 @@ export const applicationSchema = z.strictObject({
   source: text.optional(),
   skills: z.array(text.min(1).max(120)).max(50).optional(),
   deadline: date.optional(),
+  priority: prioritySchema.optional(),
+  tags: tagsSchema.optional(),
+  assessments: z
+    .array(assessmentSchema)
+    .max(50)
+    .refine(
+      (entries) => new Set(entries.map(({ id }) => id)).size === entries.length,
+      { message: "Assessment IDs must be unique" },
+    )
+    .optional(),
   notes: longText.optional(),
   appliedAt: date.optional(),
   resumeVersion: text.optional(),
@@ -82,6 +132,7 @@ export const applicationSchema = z.strictObject({
       bonus: z.number().nonnegative().optional(),
       equity: z.number().nonnegative().optional(),
       currency: z.string().regex(/^[A-Z]{3}$/),
+      deadline: date.optional(),
       notes: longText.optional(),
     })
     .optional(),
@@ -102,6 +153,7 @@ export const updateSchema = applicationSchema.partial().extend({
         "description",
         "source",
         "deadline",
+        "priority",
         "notes",
         "appliedAt",
         "resumeVersion",
