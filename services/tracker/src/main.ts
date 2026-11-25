@@ -3,6 +3,7 @@ import { Hono } from "hono";
 import { createApplicationRoutes } from "./applications/routes.js";
 import type { Application } from "./applications/schema.js";
 import { MongoClient } from "mongodb";
+import { createProfileRoutes, type Profile } from "./profile/routes.js";
 
 const app = new Hono();
 const mongo = new MongoClient(
@@ -12,6 +13,8 @@ const mongo = new MongoClient(
 
 const trackerDb = mongo.db("job_tracker_tracker");
 const applications = trackerDb.collection<Application>("applications");
+const profiles = trackerDb.collection<Profile>("profiles");
+await profiles.createIndex({ ownerId: 1 }, { unique: true }, undefined);
 
 await applications.createIndex(
   {
@@ -34,6 +37,12 @@ app.get("/ready", async (c) => {
   }
 });
 
+app.route("/profile", createProfileRoutes(profiles));
+
 app.route("/applications", createApplicationRoutes(applications));
 
-serve({ fetch: app.fetch, hostname: "127.0.0.1", port: 3002 });
+serve({
+  fetch: app.fetch,
+  hostname: process.env.HOST ?? "127.0.0.1",
+  port: 3002,
+});
