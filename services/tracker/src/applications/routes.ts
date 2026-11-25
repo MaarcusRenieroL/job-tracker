@@ -1,5 +1,7 @@
 import { resumeMatch } from "./resume-match.js";
 import { Hono } from "hono";
+import { z } from "zod";
+import { importPosting, ImportError } from "./import-posting.js";
 import { bodyLimit } from "hono/body-limit";
 import type { Collection, Filter, WithId } from "mongodb";
 import { requireAuth, type TrackerEnv } from "../auth/require-auth.js";
@@ -39,6 +41,20 @@ export function createApplicationRoutes(applications: Collection<Application>) {
       return c.json({ applications: rows });
     })
     .post("/", (c) => handleCreate(c, applications))
+    .post("/import", async (c) => {
+      const input = z
+        .strictObject({ url: z.url({ protocol: /^https?$/ }).max(2048) })
+        .safeParse(await c.req.json().catch(() => null));
+      if (!input.success)
+        return c.json({ error: "Enter a valid HTTP or HTTPS job URL." }, 400);
+      try {
+        return c.json(await importPosting(input.data.url));
+      } catch (error) {
+        if (error instanceof ImportError)
+          return c.json({ error: error.message }, 422);
+        throw error;
+      }
+    })
     .get("/agenda", async (c) => {
       const parsed = agendaQuery.safeParse(c.req.query());
       if (!parsed.success)
