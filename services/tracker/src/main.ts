@@ -24,6 +24,16 @@ await applications.createIndex(
 
 app.get("/health", (c) => c.json({ service: "tracker", status: "ok" }));
 
+app.get("/ready", async (c) => {
+  try {
+    await trackerDb.command({ ping: 1 });
+    return c.json({ service: "tracker", status: "ready" });
+  } catch (error) {
+    console.error("Tracker MongoDB readiness check failed", error);
+    return c.json({ service: "tracker", status: "unavailable" }, 503);
+  }
+});
+
 app.route("/applications", createApplicationRoutes(applications));
 
 serve({ fetch: app.fetch, hostname: "127.0.0.1", port: 3002 });
