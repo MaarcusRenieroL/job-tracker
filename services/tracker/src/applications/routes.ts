@@ -3,7 +3,7 @@ import { bodyLimit } from "hono/body-limit";
 import type { Collection, Filter, WithId } from "mongodb";
 import { requireAuth, type TrackerEnv } from "../auth/require-auth.js";
 import { handleCreate, handleUpdate } from "./handlers.js";
-import { ownerFilter, resumeMatch } from "./procedures.js";
+import { exactTagFilter, ownerFilter, resumeMatch } from "./procedures.js";
 import { draftReferral } from "./referral-draft.js";
 import {
   agendaQuery,
@@ -29,8 +29,7 @@ export function createApplicationRoutes(applications: Collection<Application>) {
       if (stage) filter.stage = stage;
       if (priority) filter.priority = priority;
       if (tag) {
-        const escaped = tag.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-        filter.tags = new RegExp(`^${escaped}$`, "i");
+        filter.tags = exactTagFilter(tag);
       }
       const rows = await applications
         .find(filter)

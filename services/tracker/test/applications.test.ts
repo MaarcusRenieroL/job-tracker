@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { resumeMatch } from "../src/applications/procedures.js";
+import { exactTagFilter, resumeMatch } from "../src/applications/procedures.js";
 import { applicationSchema, updateSchema } from "../src/applications/schema.js";
 
 test("saving an application requires valid posting fields and rejects client ownership", () => {
@@ -68,4 +68,14 @@ test("priority, tags, assessments and offer deadlines validate on create and pat
       .success,
     true,
   );
+});
+
+
+test("tag filters treat regular expression characters literally", () => {
+  for (const tag of ["C++", "a.b", "[remote]", "R&D", "C#"]) {
+    const filter = exactTagFilter(tag);
+    assert.equal(filter.test(tag.toLowerCase()), true);
+    assert.equal(filter.test(`prefix ${tag}`), false);
+  }
+  assert.equal(exactTagFilter("a.b").test("axb"), false);
 });

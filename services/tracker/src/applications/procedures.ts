@@ -1,6 +1,11 @@
 import { ObjectId, type Collection } from "mongodb";
 import type { Application, ApplicationInput } from "./schema.js";
 
+export function exactTagFilter(tag: string) {
+  const escaped = tag.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return new RegExp(`^${escaped}$`, "i");
+}
+
 export function ownerFilter(ownerId: string, id: string) {
   return { ownerId, _id: new ObjectId(id) };
 }
