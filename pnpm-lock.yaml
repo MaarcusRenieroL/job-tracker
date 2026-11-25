@@ -279,6 +279,9 @@ importers:
       jose:
         specifier: ^6.2.18
         version: 6.2.18
+      mongodb:
+        specifier: ^7.9.1
+        version: 7.9.1(socks@2.8.11)
     devDependencies:
       '@types/node':
         specifier: ^24.19.2
