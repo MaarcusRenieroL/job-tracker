@@ -1,0 +1,5 @@
+{
+  "name": "job-tracker",
+  "private": "true",
+  "packageManager": "pnpm@$(pnpm --version)"
+}
