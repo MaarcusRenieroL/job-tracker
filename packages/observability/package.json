@@ -1,0 +1,13 @@
+{
+  "name": "@job-tracker/observability",
+  "private": true,
+  "type": "module",
+  "exports": "./index.ts",
+  "dependencies": {
+    "@opentelemetry/api": "^1.10.0",
+    "@opentelemetry/exporter-trace-otlp-http": "^0.301.2",
+    "@opentelemetry/sdk-node": "^0.301.2",
+    "@prometheus-io/client": "^0.16.1",
+    "hono": "^4.13.21"
+  }
+}

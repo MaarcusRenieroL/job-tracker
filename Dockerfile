@@ -6,6 +6,7 @@ COPY apps/web/package.json apps/web/package.json
 COPY services/auth/package.json services/auth/package.json
 COPY services/tracker/package.json services/tracker/package.json
 COPY packages/application-options/package.json packages/application-options/package.json
+COPY packages/observability/package.json packages/observability/package.json
 RUN pnpm install --frozen-lockfile
 COPY apps/web apps/web
 COPY services services

@@ -6,7 +6,14 @@ services:
     volumes:
       - mongo-data:/data/db
     healthcheck:
-      test: ["CMD", "mongosh", "--quiet", "--eval", "quit(db.adminCommand({ ping: 1 }).ok ? 0 : 1)"]
+      test:
+        [
+          "CMD",
+          "mongosh",
+          "--quiet",
+          "--eval",
+          "quit(db.adminCommand({ ping: 1 }).ok ? 0 : 1)",
+        ]
       interval: 3s
       timeout: 3s
       retries: 20
@@ -41,6 +48,7 @@ services:
     environment:
       HOST: 0.0.0.0
       MONGO_URI: mongodb://mongo:27017
+      OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: ${OTEL_EXPORTER_OTLP_TRACES_ENDPOINT:-}
     volumes:
       - signing-keys:/app/.local:ro
     depends_on:
@@ -55,6 +63,8 @@ services:
     environment:
       HOST: 0.0.0.0
       MONGO_URI: mongodb://mongo:27017
+      OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: ${OTEL_EXPORTER_OTLP_TRACES_ENDPOINT:-}
+      AUTH_URL: http://auth:3001
     volumes:
       - signing-keys:/app/.local:ro
     depends_on:
@@ -74,6 +84,22 @@ services:
     depends_on:
       - auth
       - tracker
+
+  prometheus:
+    image: prom/prometheus:v3.5.0
+    profiles: ["observability"]
+    ports:
+      - "127.0.0.1:9090:9090"
+    volumes:
+      - ./infra/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    depends_on:
+      - tracker
+
+  jaeger:
+    image: cr.jaegertracing.io/jaegertracing/jaeger:2.23.0
+    profiles: ["observability"]
+    ports:
+      - "127.0.0.1:16686:16686"
 
 volumes:
   mongo-data:

@@ -9,8 +9,10 @@
     "test": "tsx --test test/*.test.ts"
   },
   "dependencies": {
-    "@job-tracker/application-options": "workspace:*",
     "@hono/node-server": "^2.1.11",
+    "@job-tracker/application-options": "workspace:*",
+    "@job-tracker/observability": "workspace:*",
+    "@opentelemetry/api": "^1.10.0",
     "cheerio": "^1.2.0",
     "hono": "^4.13.21",
     "ipaddr.js": "^2.5.0",

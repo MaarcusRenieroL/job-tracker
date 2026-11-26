@@ -1,0 +1,10 @@
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: tracker
+    static_configs:
+      - targets: ["tracker:3002"]
+  - job_name: auth
+    static_configs:
+      - targets: ["auth:3001"]

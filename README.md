@@ -42,6 +42,25 @@ Start `pnpm --filter @job-tracker/auth dev`, `pnpm --filter @job-tracker/tracker
 
 The Compose deployment binds MongoDB to loopback for local development. Both services can override the connection URI through `MONGO_URI`.
 
+## Local observability
+
+```sh
+OTEL_EXPORTER_OTLP_TRACES_ENDPOINT=http://jaeger:4318/v1/traces \
+  docker compose --profile observability up --build -d
+```
+
+[Prometheus targets](http://127.0.0.1:9090/targets) lists Auth and Tracker. Query `up{job=~"auth|tracker"}` to check scraping and `sum by (job, status) (rate(http_requests_total[5m]))` for request rates. The shared observability package records latency in seconds and produces structured request logs. If Prometheus was already running when its scrape configuration changed, run `docker compose --profile observability restart prometheus`.
+
+Generate a trace across both services from inside the Compose network.
+
+```sh
+docker compose exec -T tracker node --input-type=module -e \
+  'const r = await fetch("http://127.0.0.1:3002/ready/dependencies"); console.log(r.status, await r.text())'
+docker compose logs --tail=20 tracker auth
+```
+
+Tracker checks Auth's readiness with a bounded HTTP request. The resulting trace contains Tracker's incoming request, its outbound call, and Auth's readiness handler. In [Jaeger](http://127.0.0.1:16686), select the `tracker` service or search for the trace ID printed in both service logs. Jaeger stores traces in memory for the local run.
+
 ## Resume coverage and referral drafts
 
 Resume coverage awards one point for a strong match, half a point for a partial match, and zero for a missing skill. The score is the weighted share of required skills. Location and seniority signals look for explicit resume text and stay outside the score.

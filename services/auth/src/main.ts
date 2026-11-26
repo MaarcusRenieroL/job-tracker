@@ -1,3 +1,4 @@
+import { registerObservability, startTracing } from "@job-tracker/observability";
 import { serve } from "@hono/node-server";
 import { Hono } from "hono";
 import { MongoClient } from "mongodb";
@@ -7,7 +8,9 @@ import type { User } from "./auth/procedures.js";
 import { readFile } from "node:fs/promises";
 import { importPKCS8, SignJWT } from "jose";
 
+const tracing = startTracing("auth");
 const app = new Hono();
+registerObservability(app, "auth");
 const mongo = new MongoClient(
   process.env.MONGO_URI ?? "mongodb://127.0.0.1:27017",
   {
@@ -52,8 +55,12 @@ const issueToken = (userId: string) =>
 
 app.route("/auth", createAuthRoutes(users, issueToken));
 
-serve({
+const server = serve({
   fetch: app.fetch,
   hostname: process.env.HOST ?? "127.0.0.1",
   port: 3001,
+});
+
+server.once("close", () => {
+  void tracing?.shutdown().catch((error: unknown) => console.error("Tracing shutdown failed", error));
 });

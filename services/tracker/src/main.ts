@@ -1,3 +1,4 @@
+import { registerObservability, startTracing } from "@job-tracker/observability";
 import { serve } from "@hono/node-server";
 import { Hono } from "hono";
 import { createApplicationRoutes } from "./applications/routes.js";
@@ -5,7 +6,11 @@ import type { Application } from "./applications/schema.js";
 import { MongoClient } from "mongodb";
 import { createProfileRoutes, type Profile } from "./profile/routes.js";
 
+import { checkAuthReadiness } from "./system/auth-readiness.js";
+
+const tracing = startTracing("tracker");
 const app = new Hono();
+registerObservability(app, "tracker");
 const mongo = new MongoClient(
   process.env.MONGO_URI ?? "mongodb://127.0.0.1:27017",
   { serverSelectionTimeoutMS: 2_000 },
@@ -37,12 +42,25 @@ app.get("/ready", async (c) => {
   }
 });
 
+const authUrl = process.env.AUTH_URL;
+if (authUrl) {
+  const authReadyUrl = new URL("/ready", authUrl);
+  app.get("/ready/dependencies", async (c) => {
+    const ready = await checkAuthReadiness(authReadyUrl);
+    return c.json({ auth: ready ? "ready" : "unavailable" }, ready ? 200 : 503);
+  });
+}
+
 app.route("/profile", createProfileRoutes(profiles));
 
 app.route("/applications", createApplicationRoutes(applications));
 
-serve({
+const server = serve({
   fetch: app.fetch,
   hostname: process.env.HOST ?? "127.0.0.1",
   port: 3002,
+});
+
+server.once("close", () => {
+  void tracing?.shutdown().catch((error: unknown) => console.error("Tracing shutdown failed", error));
 });
