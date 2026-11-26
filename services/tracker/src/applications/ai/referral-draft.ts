@@ -1,15 +1,13 @@
-import { generatePlainText, type FetchLike } from "./ollama.js";
-import type { Application } from "./schema.js";
+import type { Application } from "../schema.js";
+import { generatePlainText, type AiRuntimeOptions } from "./ollama.js";
 
 type Referral = NonNullable<Application["referrals"]>[number];
 
 export async function draftReferral(
   application: Application,
   referral: Referral,
-  options?: {
+  options?: AiRuntimeOptions & {
     candidateName?: string;
-    env?: NodeJS.ProcessEnv;
-    fetchImpl?: FetchLike;
   },
 ) {
   const { candidateName, ...ollamaOptions } = options ?? {};

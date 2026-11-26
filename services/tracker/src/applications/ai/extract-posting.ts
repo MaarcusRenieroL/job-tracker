@@ -1,5 +1,6 @@
+import type { PostingSuggestions } from "@job-tracker/application-options";
 import { z } from "zod";
-import { generateStructured, type FetchLike } from "./ollama.js";
+import { generateStructured, type AiRuntimeOptions } from "./ollama.js";
 
 const extractFormatSchema = z.object({
   seniority: z.string(),
@@ -36,12 +37,10 @@ export const extractSchema = z.object({
     .transform((items) => dedupeStrings(items, 300, 12)),
 });
 
-export type PostingSuggestions = z.infer<typeof extractSchema>;
-
 export async function extractPosting(
   description: string,
   role?: string,
-  options?: { env?: NodeJS.ProcessEnv; fetchImpl?: FetchLike },
+  options?: AiRuntimeOptions,
 ): Promise<PostingSuggestions | null> {
   return generateStructured({
     system:

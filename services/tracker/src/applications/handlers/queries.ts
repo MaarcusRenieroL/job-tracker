@@ -2,20 +2,25 @@ import type { Context } from "hono";
 import type { Collection, Filter, WithId } from "mongodb";
 import type { TrackerEnv } from "../../auth/require-auth.js";
 import { applicationAgenda } from "../agenda.js";
-import { exactTagFilter } from "../procedures.js";
+import { exactTagFilter, findOwnedApplication } from "../procedures.js";
 import { resumeMatch } from "../resume-match.js";
-import { agendaQuery, applicationListQuery, type Application } from "../schema.js";
+import {
+  agendaQuery,
+  applicationListQuery,
+  type Application,
+} from "../schema.js";
 
 export async function handleList(
   c: Context<TrackerEnv>,
   applications: Collection<Application>,
 ) {
   const parsed = applicationListQuery.safeParse(c.req.query());
-  if (!parsed.success)
+  if (!parsed.success) {
     return c.json(
       { error: "Invalid application filters", issues: parsed.error.issues },
       400,
     );
+  }
   const { stage, priority, tag } = parsed.data;
   const filter: Filter<Application> = { ownerId: c.get("ownerId") };
   if (stage) filter.stage = stage;
@@ -35,15 +40,17 @@ export async function handleAgenda(
   applications: Collection<Application>,
 ) {
   const parsed = agendaQuery.safeParse(c.req.query());
-  if (!parsed.success)
+  if (!parsed.success) {
     return c.json(
       { error: "Invalid agenda date range", issues: parsed.error.issues },
       400,
     );
+  }
 
   const { from = new Date().toISOString().slice(0, 10), to } = parsed.data;
-  if (to && from > to)
+  if (to && from > to) {
     return c.json({ error: "from must be on or before to" }, 400);
+  }
   const rows = await applications
     .find({ ownerId: c.get("ownerId") })
     .project<Parameters<typeof applicationAgenda>[0]>({
@@ -75,10 +82,7 @@ export async function handleOffers(
   const offers = await applications
     .find({ ownerId: c.get("ownerId"), offer: { $exists: true } })
     .project<
-      Pick<
-        WithId<Application>,
-        "_id" | "company" | "role" | "stage" | "offer"
-      >
+      Pick<WithId<Application>, "_id" | "company" | "role" | "stage" | "offer">
     >({
       company: 1,
       role: 1,
@@ -116,4 +120,26 @@ export async function handleMissingSkills(
       .sort((a, b) => b.count - a.count || a.skill.localeCompare(b.skill))
       .slice(0, 10),
   });
+}
+
+export async function handleMatch(
+  c: Context<TrackerEnv>,
+  applications: Collection<Application>,
+  id: string,
+) {
+  const application = await findOwnedApplication(
+    applications,
+    c.get("ownerId"),
+    id,
+  );
+  if (!application) return c.json({ error: "Application not found" }, 404);
+  if (!application.resumeText || !application.skills?.length) {
+    return c.json(
+      { error: "Add resume text and required skills first" },
+      400,
+    );
+  }
+  return c.json(
+    resumeMatch(application.skills, application.resumeText, application),
+  );
 }

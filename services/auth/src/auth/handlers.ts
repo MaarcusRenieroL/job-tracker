@@ -3,11 +3,17 @@ import type { Collection } from "mongodb";
 import { z } from "zod";
 import { registerUser, verifyCredentials, type User } from "./procedures.js";
 
-const registrationSchema = z.object({
-  name: z.string().trim().min(1).max(120).optional(),
+const credentialsFields = {
   email: z.string().trim().toLowerCase().pipe(z.email()),
   password: z.string().min(12).max(128),
+};
+
+const registrationSchema = z.strictObject({
+  name: z.string().trim().min(1).max(120).optional(),
+  ...credentialsFields,
 });
+
+const loginSchema = z.strictObject(credentialsFields);
 
 export async function handleRegistration(c: Context, users: Collection<User>) {
   const body: unknown = await c.req.json().catch(() => undefined);
@@ -36,14 +42,13 @@ export async function handleLogin(
   issueToken: (userId: string) => Promise<string>,
 ) {
   const body: unknown = await c.req.json().catch(() => undefined);
-  const result = registrationSchema.safeParse(body);
+  const result = loginSchema.safeParse(body);
 
   if (!result.success) {
     return c.json({ error: "Provide a valid email and password" }, 400);
   }
 
   const user = await verifyCredentials(users, result.data);
-
   if (!user) {
     return c.json({ error: "Invalid email or password" }, 401);
   }

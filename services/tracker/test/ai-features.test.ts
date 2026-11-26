@@ -1,14 +1,14 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { explainFit } from "../src/applications/ai-fit.js";
-import { extractPosting } from "../src/applications/extract-posting.js";
-import { generateInterviewPrep } from "../src/applications/interview-prep.js";
-import type { FetchLike } from "../src/applications/ollama.js";
 import {
   draftCoverLetter,
   draftFollowUp,
-} from "../src/applications/outreach-drafts.js";
-import { draftReferral } from "../src/applications/referral-draft.js";
+  draftReferral,
+  explainFit,
+  extractPosting,
+  generateInterviewPrep,
+  type FetchLike,
+} from "../src/applications/ai/index.js";
 import { resumeMatch } from "../src/applications/resume-match.js";
 import type { Application } from "../src/applications/schema.js";
 
@@ -114,6 +114,7 @@ test("draftReferral honors OLLAMA_BASE_URL for Compose networking", async () => 
     sampleApplication,
     sampleApplication.referrals![0],
     {
+      candidateName: "Aarav Mehta",
       env: {
         OLLAMA_BASE_URL: "http://ollama:11434",
         OLLAMA_MODEL: "qwen2.5:1.5b",
@@ -168,7 +169,10 @@ test("explainFit returns evidence-backed summary while preserving deterministic 
   assert.equal(calls[0].url, "http://ollama:11434/api/chat");
   assert.equal(match.score, 67);
   assert.equal(explanation?.strengths.length, 1);
-  assert.equal(explanation?.gaps[0]?.point, "Kubernetes operations missing from resume");
+  assert.equal(
+    explanation?.gaps[0]?.point,
+    "Kubernetes operations missing from resume",
+  );
   assert.equal(
     explanation?.preparation[0]?.evidence,
     "Kubernetes is listed as a missing required skill.",

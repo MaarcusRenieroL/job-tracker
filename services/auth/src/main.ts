@@ -1,45 +1,31 @@
-import { registerObservability, startTracing } from "@job-tracker/observability";
+import { readFile } from "node:fs/promises";
 import { serve } from "@hono/node-server";
-import { Hono } from "hono";
+import {
+  registerGracefulShutdown,
+  startTracing,
+} from "@job-tracker/observability";
+import { importPKCS8, SignJWT } from "jose";
 import { MongoClient } from "mongodb";
-import { createAuthRoutes } from "./auth/routes.js";
+import { createAuthApp } from "./app.js";
 import type { User } from "./auth/procedures.js";
 
-import { readFile } from "node:fs/promises";
-import { importPKCS8, SignJWT } from "jose";
-
 const tracing = startTracing("auth");
-const app = new Hono();
-registerObservability(app, "auth");
+
 const mongo = new MongoClient(
   process.env.MONGO_URI ?? "mongodb://127.0.0.1:27017",
-  {
-    serverSelectionTimeoutMS: 2_000,
-  },
+  { serverSelectionTimeoutMS: 2_000 },
 );
 
 const authDb = mongo.db("job_tracker_auth");
-
 const users = authDb.collection<User>("users");
-await users.createIndex({ email: 1 }, { unique: true }, undefined);
+await users.createIndex({ email: 1 }, { unique: true });
 
-app.get("/ready", async (c) => {
-  try {
-    await authDb.command({ ping: 1 });
-    return c.json({ service: "auth", status: "ready" });
-  } catch (error) {
-    console.error("Auth MongoDB readiness check failed", error);
-    return c.json({ service: "auth", status: "unavailable" }, 503);
-  }
-});
-
-app.get("/health", (c) => c.json({ service: "auth", status: "ok" }));
+const privateKeyPath =
+  process.env.AUTH_PRIVATE_KEY_PATH ??
+  new URL("../../../.local/auth-private.pem", import.meta.url);
 
 const privateKey = await importPKCS8(
-  await readFile(
-    new URL("../../../.local/auth-private.pem", import.meta.url),
-    "utf8",
-  ),
+  await readFile(privateKeyPath, "utf8"),
   "EdDSA",
 );
 
@@ -53,14 +39,23 @@ const issueToken = (userId: string) =>
     .setExpirationTime("15m")
     .sign(privateKey);
 
-app.route("/auth", createAuthRoutes(users, issueToken));
+const app = createAuthApp({
+  users,
+  issueToken,
+  pingDb: async () => {
+    await authDb.command({ ping: 1 });
+  },
+});
 
 const server = serve({
   fetch: app.fetch,
   hostname: process.env.HOST ?? "127.0.0.1",
-  port: 3001,
+  port: Number(process.env.PORT ?? 3001),
 });
 
-server.once("close", () => {
-  void tracing?.shutdown().catch((error: unknown) => console.error("Tracing shutdown failed", error));
+registerGracefulShutdown({
+  service: "auth",
+  server,
+  tracing,
+  onClose: () => mongo.close(),
 });

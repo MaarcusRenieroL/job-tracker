@@ -1,7 +1,8 @@
+import type { InterviewPrep } from "@job-tracker/application-options";
 import { z } from "zod";
-import { generateStructured, type FetchLike } from "./ollama.js";
-import { resumeMatch } from "./resume-match.js";
-import type { Application } from "./schema.js";
+import { resumeMatch } from "../resume-match.js";
+import type { Application } from "../schema.js";
+import { generateStructured, type AiRuntimeOptions } from "./ollama.js";
 
 const prepFormatSchema = z.object({
   topics: z.array(
@@ -31,7 +32,9 @@ const topicItemSchema = z
 const questionItemSchema = z
   .object({
     question: z.string().transform((v) => v.trim().slice(0, 320)),
-    category: z.string().transform((v) => v.trim().slice(0, 80) || "Role-specific"),
+    category: z
+      .string()
+      .transform((v) => v.trim().slice(0, 80) || "Role-specific"),
     whyAsked: z.string().transform((v) => v.trim().slice(0, 300)),
   })
   .refine((item) => item.question.length > 0 && item.whyAsked.length > 0);
@@ -55,8 +58,6 @@ export const interviewPrepSchema = z.object({
   ),
 });
 
-export type InterviewPrep = z.infer<typeof interviewPrepSchema>;
-
 export async function generateInterviewPrep(
   application: Pick<
     Application,
@@ -71,7 +72,7 @@ export async function generateInterviewPrep(
     | "resumeText"
     | "interviews"
   >,
-  options?: { env?: NodeJS.ProcessEnv; fetchImpl?: FetchLike },
+  options?: AiRuntimeOptions,
 ): Promise<InterviewPrep | null> {
   const match =
     application.skills?.length && application.resumeText

@@ -6,13 +6,16 @@ import {
   SpanStatusCode,
   trace,
 } from "@opentelemetry/api";
-import type { Hono } from "hono";
-import { routePath } from "hono/route";
-import { Counter, Histogram, Registry } from "@prometheus-io/client";
 import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-http";
 import { NodeSDK } from "@opentelemetry/sdk-node";
+import { Counter, Histogram, Registry } from "@prometheus-io/client";
+import type { Hono } from "hono";
+import { routePath } from "hono/route";
 
-export function registerObservability(app: Hono, service: string) {
+export function registerObservability<TEnv extends object>(
+  app: Hono<TEnv>,
+  service: string,
+) {
   const { metricsRegistry, recordRequest } = createRequestMetrics();
   const tracer = trace.getTracer("job-tracker.http");
 
@@ -36,13 +39,16 @@ export function registerObservability(app: Hono, service: string) {
           status = c.res.status;
         } finally {
           const matchedPath = routePath(c, -1);
-          const route = matchedPath && !matchedPath.endsWith("*")
-            ? matchedPath
-            : "unmatched";
+          const route =
+            matchedPath && !matchedPath.endsWith("*")
+              ? matchedPath
+              : "unmatched";
           const durationMs = performance.now() - startedAt;
           const spanContext = span.spanContext();
 
-          span.updateName(route === "unmatched" ? method : `${method} ${route}`);
+          span.updateName(
+            route === "unmatched" ? method : `${method} ${route}`,
+          );
           span.setAttributes({
             "http.request.method": method,
             "http.response.status_code": status,
@@ -52,19 +58,21 @@ export function registerObservability(app: Hono, service: string) {
           span.end();
 
           recordRequest(method, route, status, durationMs);
-          console.info(JSON.stringify({
-            event: "http.request",
-            service,
-            requestId,
-            method,
-            route,
-            status,
-            durationMs: Math.round(durationMs * 100) / 100,
-            ...(trace.isSpanContextValid(spanContext) && {
-              traceId: spanContext.traceId,
-              spanId: spanContext.spanId,
+          console.info(
+            JSON.stringify({
+              event: "http.request",
+              service,
+              requestId,
+              method,
+              route,
+              status,
+              durationMs: Math.round(durationMs * 100) / 100,
+              ...(trace.isSpanContextValid(spanContext) && {
+                traceId: spanContext.traceId,
+                spanId: spanContext.spanId,
+              }),
             }),
-          }));
+          );
         }
       },
     );
@@ -78,7 +86,6 @@ export function registerObservability(app: Hono, service: string) {
 
 function createRequestMetrics() {
   const metricsRegistry = new Registry();
-
   const labelNames = ["method", "route", "status"] as const;
 
   const requests = new Counter({
@@ -103,7 +110,6 @@ function createRequestMetrics() {
     durationMs: number,
   ) {
     const labels = { method, route, status: String(status) };
-
     requests.inc(labels);
     duration.observe(labels, durationMs / 1_000);
   }
@@ -112,8 +118,8 @@ function createRequestMetrics() {
 }
 
 export function startTracing(serviceName: string) {
-  const endpoint = process.env.OTEL_EXPORTER_OTLP_TRACES_ENDPOINT;
-  if (!endpoint) return;
+  const endpoint = process.env.OTEL_EXPORTER_OTLP_TRACES_ENDPOINT?.trim();
+  if (!endpoint) return undefined;
 
   const sdk = new NodeSDK({
     serviceName,
@@ -121,4 +127,32 @@ export function startTracing(serviceName: string) {
   });
   sdk.start();
   return sdk;
+}
+
+export function registerGracefulShutdown({
+  service,
+  server,
+  tracing,
+  onClose,
+}: {
+  service: string;
+  server: { close: (cb?: (err?: Error) => void) => void };
+  tracing?: { shutdown: () => Promise<void> };
+  onClose?: () => Promise<void>;
+}) {
+  let shuttingDown = false;
+
+  const shutdown = async (signal: string) => {
+    if (shuttingDown) return;
+    shuttingDown = true;
+    console.info(
+      JSON.stringify({ event: "service.shutdown", service, signal }),
+    );
+    await new Promise<void>((resolve) => server.close(() => resolve()));
+    await Promise.allSettled([tracing?.shutdown(), onClose?.()]);
+    process.exit(0);
+  };
+
+  process.once("SIGINT", () => void shutdown("SIGINT"));
+  process.once("SIGTERM", () => void shutdown("SIGTERM"));
 }

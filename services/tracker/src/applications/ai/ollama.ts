@@ -2,6 +2,11 @@ import { z } from "zod";
 
 export type FetchLike = typeof fetch;
 
+export type AiRuntimeOptions = {
+  env?: NodeJS.ProcessEnv;
+  fetchImpl?: FetchLike;
+};
+
 const chatResponseSchema = z.object({
   message: z.object({
     content: z.string(),
@@ -24,15 +29,13 @@ export async function generatePlainText({
   maxChars = 4_000,
   env = process.env,
   fetchImpl = fetch,
-}: {
+}: AiRuntimeOptions & {
   system: string;
   user: unknown;
   numPredict?: number;
   temperature?: number;
   timeoutMs?: number;
   maxChars?: number;
-  env?: NodeJS.ProcessEnv;
-  fetchImpl?: FetchLike;
 }): Promise<string | null> {
   const config = getOllamaConfig(env);
   if (!config) return null;
@@ -78,7 +81,7 @@ export async function generateStructured<TSchema extends z.ZodType>({
   timeoutMs = 60_000,
   env = process.env,
   fetchImpl = fetch,
-}: {
+}: AiRuntimeOptions & {
   system: string;
   user: unknown;
   schema: TSchema;
@@ -86,8 +89,6 @@ export async function generateStructured<TSchema extends z.ZodType>({
   numPredict?: number;
   temperature?: number;
   timeoutMs?: number;
-  env?: NodeJS.ProcessEnv;
-  fetchImpl?: FetchLike;
 }): Promise<z.infer<TSchema> | null> {
   const config = getOllamaConfig(env);
   if (!config) return null;

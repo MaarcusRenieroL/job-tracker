@@ -1,7 +1,8 @@
+import type { FitExplanation } from "@job-tracker/application-options";
 import { z } from "zod";
-import { generateStructured, type FetchLike } from "./ollama.js";
-import type { resumeMatch } from "./resume-match.js";
-import type { Application } from "./schema.js";
+import type { resumeMatch } from "../resume-match.js";
+import type { Application } from "../schema.js";
+import { generateStructured, type AiRuntimeOptions } from "./ollama.js";
 
 const evidenceItemFormatSchema = z.object({
   point: z.string(),
@@ -22,16 +23,14 @@ const normalizedEvidenceItemSchema = z
   })
   .refine((item) => item.point.length > 0 && item.evidence.length > 0);
 
-const evidenceListSchema = z
-  .array(z.unknown())
-  .transform((items) =>
-    items
-      .flatMap((item) => {
-        const parsed = normalizedEvidenceItemSchema.safeParse(item);
-        return parsed.success ? [parsed.data] : [];
-      })
-      .slice(0, 4),
-  );
+const evidenceListSchema = z.array(z.unknown()).transform((items) =>
+  items
+    .flatMap((item) => {
+      const parsed = normalizedEvidenceItemSchema.safeParse(item);
+      return parsed.success ? [parsed.data] : [];
+    })
+    .slice(0, 4),
+);
 
 export const fitSchema = z.object({
   summary: z
@@ -42,8 +41,6 @@ export const fitSchema = z.object({
   gaps: evidenceListSchema,
   preparation: evidenceListSchema,
 });
-
-export type FitExplanation = z.infer<typeof fitSchema>;
 
 export async function explainFit(
   application: Pick<
@@ -56,7 +53,7 @@ export async function explainFit(
     | "resumeText"
   >,
   match: ReturnType<typeof resumeMatch>,
-  options?: { env?: NodeJS.ProcessEnv; fetchImpl?: FetchLike },
+  options?: AiRuntimeOptions,
 ): Promise<FitExplanation | null> {
   return generateStructured({
     system:

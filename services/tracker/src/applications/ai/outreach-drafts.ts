@@ -1,5 +1,5 @@
-import { generatePlainText, type FetchLike } from "./ollama.js";
-import type { Application } from "./schema.js";
+import type { Application } from "../schema.js";
+import { generatePlainText, type AiRuntimeOptions } from "./ollama.js";
 
 export type CandidateContext = {
   name?: string;
@@ -26,7 +26,7 @@ export async function draftCoverLetter(
     | "resumeText"
   >,
   candidate: CandidateContext = {},
-  options?: { env?: NodeJS.ProcessEnv; fetchImpl?: FetchLike },
+  options?: AiRuntimeOptions,
 ) {
   const resume = (application.resumeText || candidate.resumeText || "").slice(
     0,
@@ -73,7 +73,7 @@ export async function draftFollowUp(
   >,
   candidate: CandidateContext = {},
   context: FollowUpContext = {},
-  options?: { env?: NodeJS.ProcessEnv; fetchImpl?: FetchLike },
+  options?: AiRuntimeOptions,
 ) {
   const resume = (application.resumeText || candidate.resumeText || "").slice(
     0,
