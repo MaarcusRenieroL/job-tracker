@@ -98,6 +98,7 @@ export const agendaQuery = z
 export const applicationSchema = z.strictObject({
   company: text.min(1).max(120),
   role: text.min(1).max(120),
+  seniority: text.max(120).optional(),
   jobUrl: url.optional(),
   location: text.optional(),
   workModel: z.enum(["Remote", "Hybrid", "On-site"]).optional(),
@@ -106,6 +107,7 @@ export const applicationSchema = z.strictObject({
   descriptionHtml: formattedText,
   source: text.optional(),
   skills: z.array(text.min(1).max(120)).max(50).optional(),
+  responsibilities: z.array(text.min(1).max(300)).max(25).optional(),
   deadline: date.optional(),
   priority: prioritySchema.optional(),
   tags: tagsSchema.optional(),
@@ -148,6 +150,7 @@ export const updateSchema = applicationSchema.partial().extend({
   clear: z
     .array(
       z.enum([
+        "seniority",
         "jobUrl",
         "location",
         "workModel",

@@ -61,18 +61,26 @@ docker compose logs --tail=20 tracker auth
 
 Tracker checks Auth's readiness with a bounded HTTP request. The resulting trace contains Tracker's incoming request, its outbound call, and Auth's readiness handler. In [Jaeger](http://127.0.0.1:16686), select the `tracker` service or search for the trace ID printed in both service logs. Jaeger stores traces in memory for the local run.
 
-## Resume coverage and referral drafts
+## Resume coverage and local AI features
 
-Resume coverage awards one point for a strong match, half a point for a partial match, and zero for a missing skill. The score is the weighted share of required skills. Location and seniority signals look for explicit resume text and stay outside the score.
+Resume coverage awards one point for a strong match, half a point for a partial match, and zero for a missing skill. The score is the weighted share of required skills and stays deterministic and reproducible. Location and seniority signals look for explicit resume text and stay outside the score.
 
-To enable AI drafts with Docker, start the optional AI profile:
+To enable local AI features with Docker, start the optional AI profile:
 
 ```sh
 docker compose --profile ai up --build -d
 docker compose --profile ai logs -f ollama-init
 ```
 
-On the first run, Docker pulls Ollama and downloads `qwen2.5:1.5b`. The `ollama-models` volume keeps the model for later runs. Wait for `ollama-init` to exit successfully, then save an application and a referral contact and select **Draft with AI**. Review the editable result before sending. Set `OLLAMA_MODEL` before starting Compose to change the model. The core app also runs with the standard startup command.
+On the first run, Docker pulls Ollama and downloads `qwen2.5:1.5b`. The `ollama-models` volume keeps the model for later runs. Wait for `ollama-init` to exit successfully. With Ollama active, Tracker supports five editorial AI workflows over `OLLAMA_BASE_URL`:
+
+- **AI job-fit explanation** (`POST /applications/:id/match/explain`): summarizes strengths, resume gaps, and interview prep priorities with resume/posting evidence while keeping the deterministic percentage score unchanged.
+- **Job description extraction** (`POST /applications/extract`): extracts editable suggestions for required skills, key responsibilities, and seniority from a pasted posting before applying them to the form.
+- **Referral draft** (`POST /applications/:id/referrals/:referralId/draft`): drafts a concise outreach message for a saved referral contact.
+- **Interview prep** (`POST /applications/:id/interview-prep`): generates role-specific study topics and practice questions from the saved posting and resume skill gaps.
+- **Cover-letter & follow-up drafts** (`POST /applications/:id/cover-letter/draft`, `POST /applications/:id/follow-up/draft`): generates editable drafts from saved facts, leaving the user in full control of editing and sending.
+
+Set `OLLAMA_MODEL` before starting Compose to change the model. The core app also runs without the `ai` profile.
 
 When running Tracker directly on your machine, start Ollama locally, pull a model, and pass its name to Tracker:
 

@@ -50,13 +50,21 @@ test("priority, tags, assessments and offer deadlines validate on create and pat
   const input = {
     company: "Example",
     role: "Engineer",
+    seniority: "Senior",
+    responsibilities: ["Own API latency", "Mentor engineers"],
     stage: "Ghosted",
     priority: "High",
     tags: [" Remote ", "remote", "backend"],
     assessments: [assessment],
     offer: { currency: "USD", deadline: "2026-12-12" },
   };
-  assert.deepEqual(applicationSchema.parse(input).tags, ["remote", "backend"]);
+  const parsed = applicationSchema.parse(input);
+  assert.deepEqual(parsed.tags, ["remote", "backend"]);
+  assert.equal(parsed.seniority, "Senior");
+  assert.deepEqual(parsed.responsibilities, [
+    "Own API latency",
+    "Mentor engineers",
+  ]);
   assert.equal(
     applicationSchema.safeParse({
       ...input,
@@ -65,8 +73,12 @@ test("priority, tags, assessments and offer deadlines validate on create and pat
     false,
   );
   assert.equal(
-    updateSchema.safeParse({ version: 1, clear: ["priority"], assessments: [] })
-      .success,
+    updateSchema.safeParse({
+      version: 1,
+      clear: ["priority", "seniority"],
+      responsibilities: [],
+      assessments: [],
+    }).success,
     true,
   );
 });

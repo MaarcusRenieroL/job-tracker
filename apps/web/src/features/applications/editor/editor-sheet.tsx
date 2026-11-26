@@ -28,6 +28,8 @@ import {
 import { useState } from "react";
 import type {
   Application,
+  FitExplanation,
+  InterviewPrep,
   Match,
   Priority,
   Stage,
@@ -77,6 +79,8 @@ export function EditorSheet({
     setCompensation,
   } = useEditorForm(job, profile);
   const [match, setMatch] = useState<Match>();
+  const [explanation, setExplanation] = useState<FitExplanation>();
+  const [prep, setPrep] = useState<InterviewPrep>();
   const [draft, setDraft] = useState("");
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [error, setError] = useState("");
@@ -229,7 +233,18 @@ export function EditorSheet({
           <div className="min-h-0 flex-1 overflow-y-auto px-6 py-5">
             <EditorOverview job={job} values={values} setValues={setValues} pending={pending} run={run} token={token} />
 
-            <EditorAssessments assessments={assessments} setAssessments={setAssessments} interviews={interviews} setInterviews={setInterviews} />
+            <EditorAssessments
+              job={job}
+              assessments={assessments}
+              setAssessments={setAssessments}
+              interviews={interviews}
+              setInterviews={setInterviews}
+              prep={prep}
+              setPrep={setPrep}
+              pending={pending}
+              run={run}
+              token={token}
+            />
 
             <EditorReferrals job={job} referrals={referrals} setReferrals={setReferrals} draft={draft} setDraft={setDraft} pending={pending} run={run} token={token} />
 
@@ -242,6 +257,8 @@ export function EditorSheet({
                 run={run}
                 setMatch={setMatch}
                 match={match}
+                explanation={explanation}
+                setExplanation={setExplanation}
                 token={token}
               />
             )}

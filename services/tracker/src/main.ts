@@ -53,7 +53,7 @@ if (authUrl) {
 
 app.route("/profile", createProfileRoutes(profiles));
 
-app.route("/applications", createApplicationRoutes(applications));
+app.route("/applications", createApplicationRoutes(applications, profiles));
 
 const server = serve({
   fetch: app.fetch,

@@ -15,7 +15,8 @@ export type Field = {
     | "datetime-local"
     | "number"
     | "select"
-    | "textarea";
+    | "textarea"
+    | "plain-textarea";
   choices?: readonly string[];
   placeholder?: string;
   allowClear?: boolean;
@@ -28,6 +29,11 @@ export const postingFields: Field[] = [
     name: "role",
     label: "Job title",
     placeholder: "e.g. Staff Product Engineer",
+  },
+  {
+    name: "seniority",
+    label: "Seniority level",
+    placeholder: "e.g. Senior, Staff, Mid-level",
   },
   {
     name: "location",
@@ -74,6 +80,14 @@ export const postingFields: Field[] = [
     name: "skills",
     label: "Required skills (comma-separated)",
     placeholder: "TypeScript, React, Distributed Systems, PostgreSQL",
+    wide: true,
+  },
+  {
+    name: "responsibilities",
+    label: "Key responsibilities (one per line)",
+    type: "plain-textarea",
+    placeholder:
+      "Design and ship resilient backend APIs\nPartner with product on roadmap execution",
     wide: true,
   },
   {

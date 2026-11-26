@@ -45,6 +45,7 @@ export type Application = {
   version: number;
   company: string;
   role: string;
+  seniority?: string;
   stage: Stage;
   priority?: Priority;
   tags?: string[];
@@ -57,6 +58,7 @@ export type Application = {
   descriptionHtml?: string;
   source?: string;
   skills?: string[];
+  responsibilities?: string[];
   deadline?: string;
   notes?: string;
   notesHtml?: string;
@@ -83,6 +85,41 @@ export type Match = {
   seniority: { target: string; evidence: string | null } | null;
   matches: { skill: string; level: string; evidence: string | null }[];
   preparation: string[];
+};
+
+export type FitEvidenceItem = {
+  point: string;
+  evidence: string;
+};
+
+export type FitExplanation = {
+  summary: string;
+  strengths: FitEvidenceItem[];
+  gaps: FitEvidenceItem[];
+  preparation: FitEvidenceItem[];
+};
+
+export type PostingSuggestions = {
+  seniority: string;
+  skills: string[];
+  responsibilities: string[];
+};
+
+export type InterviewPrepTopic = {
+  topic: string;
+  focus: string;
+  source: string;
+};
+
+export type InterviewPrepQuestion = {
+  question: string;
+  category: string;
+  whyAsked: string;
+};
+
+export type InterviewPrep = {
+  topics: InterviewPrepTopic[];
+  questions: InterviewPrepQuestion[];
 };
 
 export type AgendaEventKind =

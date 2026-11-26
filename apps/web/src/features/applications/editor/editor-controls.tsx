@@ -25,6 +25,7 @@ import {
 import { DatePicker } from "@/components/ui/date-picker";
 import { DateTimePicker } from "@/components/ui/date-time-picker";
 import { RichTextInput } from "@/components/ui/rich-text-editor";
+import { Textarea } from "@/components/ui/textarea";
 import { Plus, Trash2 } from "lucide-react";
 import { type Entry, type Stage } from "../../../types/application";
 
@@ -58,7 +59,9 @@ export function FieldGrid({
           <div
             key={field.name}
             className={
-              field.wide || field.type === "textarea"
+              field.wide ||
+              field.type === "textarea" ||
+              field.type === "plain-textarea"
                 ? "flex flex-col gap-1.5 sm:col-span-2"
                 : "flex flex-col gap-1.5"
             }
@@ -117,6 +120,14 @@ export function FieldGrid({
                 html={values[`${field.name}Html`]}
                 placeholder={field.placeholder}
                 onChange={(text, html) => change(field.name, text, html)}
+              />
+            ) : field.type === "plain-textarea" ? (
+              <Textarea
+                id={inputId}
+                value={value}
+                placeholder={field.placeholder}
+                onChange={(e) => change(field.name, e.target.value)}
+                className="min-h-20 bg-background"
               />
             ) : (
               <Input

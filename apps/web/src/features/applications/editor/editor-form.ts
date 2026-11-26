@@ -8,6 +8,7 @@ export function editorFieldValues(key: string, value: string, html?: string) {
 }
 
 const clearableKeys = [
+  "seniority",
   "jobUrl",
   "location",
   "workModel",
@@ -34,6 +35,7 @@ export function initialFields(job?: Application) {
   for (const field of [...postingFields, ...applicationFields]) {
     if (
       field.name === "skills" ||
+      field.name === "responsibilities" ||
       field.name === "tags" ||
       field.name === "stage"
     )
@@ -42,10 +44,12 @@ export function initialFields(job?: Application) {
     values[field.name] = typeof value === "string" ? value : "";
     if (field.type === "textarea") {
       const formatted = job?.[`${field.name}Html` as keyof Application];
-      values[`${field.name}Html`] = typeof formatted === "string" ? formatted : "";
+      values[`${field.name}Html`] =
+        typeof formatted === "string" ? formatted : "";
     }
   }
   values.skills = job?.skills?.join(", ") ?? "";
+  values.responsibilities = job?.responsibilities?.join("\n") ?? "";
   values.tags = job?.tags?.join(", ") ?? "";
   return values;
 }
@@ -63,66 +67,84 @@ function clean(values: Record<string, string | undefined>) {
   );
 }
 
+export function applicationPayload({
+  job,
+  values,
+  assessments,
+  referrals,
+  interviews,
+  compensation,
+}: {
+  job?: Application;
+  values: Record<string, string>;
+  assessments: Entry[];
+  referrals: Entry[];
+  interviews: Entry[];
+  compensation: Record<string, string>;
+}) {
+  const { skills = "", responsibilities = "", tags = "", ...fields } = values;
+  const parsedTags = tags
+    .split(",")
+    .map((t) => t.trim())
+    .filter(Boolean);
+  const parsedSkills = skills
+    .split(",")
+    .map((skill) => skill.trim())
+    .filter(Boolean);
+  const parsedResponsibilities = responsibilities
+    .split(/\r?\n/)
+    .map((item) => item.trim())
+    .filter(Boolean);
 
-export function applicationPayload({ job, values, assessments, referrals, interviews, compensation }: { job?: Application; values: Record<string, string>; assessments: Entry[]; referrals: Entry[]; interviews: Entry[]; compensation: Record<string, string> }) {
-      const { skills, tags, ...fields } = values;
-      const parsedTags = tags
-        .split(",")
-        .map((t) => t.trim())
-        .filter(Boolean);
-      const parsedSkills = skills
-        .split(",")
-        .map((skill) => skill.trim())
-        .filter(Boolean);
+  const serializedInterviews = interviews.map((entry, idx) => {
+    const rawDate = entry.dateTime?.trim();
+    if (!rawDate) {
+      throw new Error(
+        `Please select a date and time for interview round ${idx + 1}.`,
+      );
+    }
+    const parsedDate = new Date(rawDate);
+    if (Number.isNaN(parsedDate.getTime())) {
+      throw new Error(
+        `Invalid date and time for interview round ${idx + 1}.`,
+      );
+    }
+    return {
+      ...clean(entry),
+      dateTime: parsedDate.toISOString(),
+    };
+  });
 
-      const serializedInterviews = interviews.map((entry, idx) => {
-        const rawDate = entry.dateTime?.trim();
-        if (!rawDate) {
-          throw new Error(
-            `Please select a date and time for interview round ${idx + 1}.`,
-          );
+  return {
+    ...clean(fields),
+    ...(job
+      ? {
+          version: job.version,
+          clear: clearableKeys.filter((key) => !fields[key]?.trim()),
         }
-        const parsedDate = new Date(rawDate);
-        if (Number.isNaN(parsedDate.getTime())) {
-          throw new Error(
-            `Invalid date and time for interview round ${idx + 1}.`,
-          );
+      : {}),
+    skills: parsedSkills,
+    responsibilities: parsedResponsibilities,
+    tags: parsedTags,
+    assessments: assessments.map(clean),
+    referrals: referrals.map(clean),
+    interviews: serializedInterviews,
+    ...(compensation.currency?.trim()
+      ? {
+          offer: {
+            currency: compensation.currency.trim().toUpperCase(),
+            ...Object.fromEntries(
+              ["base", "bonus", "equity"]
+                .filter((key) => compensation[key])
+                .map((key) => [key, Number(compensation[key])]),
+            ),
+            deadline: compensation.deadline?.trim() || undefined,
+            notes: compensation.notes?.trim() || undefined,
+            notesHtml: compensation.notesHtml || undefined,
+          },
         }
-        return {
-          ...clean(entry),
-          dateTime: parsedDate.toISOString(),
-        };
-      });
-
-      return {
-        ...clean(fields),
-        ...(job
-          ? {
-              version: job.version,
-              clear: clearableKeys.filter((key) => !fields[key]?.trim()),
-            }
-          : {}),
-        skills: parsedSkills,
-        tags: parsedTags,
-        assessments: assessments.map(clean),
-        referrals: referrals.map(clean),
-        interviews: serializedInterviews,
-        ...(compensation.currency?.trim()
-          ? {
-              offer: {
-                currency: compensation.currency.trim().toUpperCase(),
-                ...Object.fromEntries(
-                  ["base", "bonus", "equity"]
-                    .filter((key) => compensation[key])
-                    .map((key) => [key, Number(compensation[key])]),
-                ),
-                deadline: compensation.deadline?.trim() || undefined,
-                notes: compensation.notes?.trim() || undefined,
-                notesHtml: compensation.notesHtml || undefined,
-              },
-            }
-          : job?.offer
-            ? { clearOffer: true }
-            : {}),
-      };
+      : job?.offer
+        ? { clearOffer: true }
+        : {}),
+  };
 }

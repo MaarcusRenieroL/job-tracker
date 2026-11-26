@@ -3,7 +3,9 @@ import type { Application } from "./schema.js";
 export function resumeMatch(
   required: string[],
   resume: string,
-  context: Pick<Application, "role" | "location" | "workModel"> = { role: "" },
+  context: Pick<Application, "role" | "seniority" | "location" | "workModel"> = {
+    role: "",
+  },
 ) {
   const normalize = (value: string) =>
     value
@@ -51,9 +53,11 @@ export function resumeMatch(
     lines.find((line) =>
       ` ${normalize(line)} `.includes(` ${normalize(location)} `),
     );
-  const seniority = context.role.match(
-    /\b(intern|junior|mid-level|senior|staff|principal|lead)\b/i,
-  )?.[0];
+  const seniority =
+    context.seniority?.trim() ||
+    context.role.match(
+      /\b(intern|junior|mid-level|senior|staff|principal|lead)\b/i,
+    )?.[0];
   const seniorityEvidence =
     seniority &&
     lines.find((line) =>

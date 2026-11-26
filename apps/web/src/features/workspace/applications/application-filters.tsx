@@ -1,6 +1,10 @@
 import { StageDot } from "@/components/status-badges";
 import { Button } from "@/components/ui/button";
-import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from "@/components/ui/input-group";
 import {
   Select,
   SelectContent,
@@ -9,12 +13,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import {
-  Columns3,
-  List,
-  RotateCcw,
-  Search,
-} from "lucide-react";
+import { Columns3, List, RotateCcw, Search } from "lucide-react";
 import { priorities, stages, type Priority } from "../../../types/application";
 import { TagFilter } from "./tag-filter";
 
@@ -83,10 +82,7 @@ export function ApplicationFilters({
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem
-              id={ALL_FILTER}
-              textValue={`All stages (${total})`}
-            >
+            <SelectItem id={ALL_FILTER} textValue={`All stages (${total})`}>
               All stages ({total})
             </SelectItem>
             {stages.map((value) => (
@@ -126,26 +122,24 @@ export function ApplicationFilters({
           </SelectContent>
         </Select>
 
+        {allTags.length > 0 && (
+          <TagFilter
+            tags={allTags}
+            selected={tagFilter}
+            onChange={setTagFilter}
+          />
+        )}
+
         {hasFilters && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onPress={resetFilters}
-          >
+          <Button variant="ghost" size="sm" onPress={resetFilters}>
             <RotateCcw className="size-3.5" /> Reset
           </Button>
         )}
 
         <div className="flex w-full items-center justify-between gap-2 sm:ml-auto sm:w-auto sm:justify-end">
           {view === "board" && !stage && (
-            <Button
-              variant="outline"
-              size="sm"
-              onPress={toggleBoardStages}
-            >
-              {showAllBoardStages
-                ? "Active stages only"
-                : "All 11 stages"}
+            <Button variant="outline" size="sm" onPress={toggleBoardStages}>
+              {showAllBoardStages ? "Active stages only" : "All 11 stages"}
             </Button>
           )}
 
@@ -175,10 +169,6 @@ export function ApplicationFilters({
           </ToggleGroup>
         </div>
       </div>
-
-      {allTags.length > 0 && (
-        <TagFilter tags={allTags} selected={tagFilter} onChange={setTagFilter} />
-      )}
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import type { Context } from "hono";
 import type { Collection } from "mongodb";
 import type { TrackerEnv } from "../../auth/require-auth.js";
+import type { Profile } from "../../profile/routes.js";
 import { ownerFilter } from "../procedures.js";
 import { draftReferral } from "../referral-draft.js";
 import { resumeMatch } from "../resume-match.js";
@@ -38,19 +39,24 @@ export async function handleDelete(
 export async function handleReferralDraft(
   c: Context<TrackerEnv>,
   applications: Collection<Application>,
+  profiles: Collection<Profile> | undefined,
   id: string,
   referralId: string,
 ) {
   if (!/^[a-f0-9]{24}$/i.test(id))
     return c.json({ error: "Application not found" }, 404);
-  const application = await applications.findOne(
-    ownerFilter(c.get("ownerId"), id),
-  );
+  const ownerId = c.get("ownerId");
+  const [application, profile] = await Promise.all([
+    applications.findOne(ownerFilter(ownerId, id)),
+    profiles?.findOne({ ownerId }),
+  ]);
   const referral = application?.referrals?.find((item) => item.id === referralId);
   if (!application || !referral)
     return c.json({ error: "Referral not found" }, 404);
   try {
-    const draft = await draftReferral(application, referral);
+    const draft = await draftReferral(application, referral, {
+      candidateName: profile?.name,
+    });
     if (!draft)
       return c.json(
         {
