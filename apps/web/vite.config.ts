@@ -6,6 +6,7 @@ import { defineConfig } from "vite";
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   server: {
+    allowedHosts: [".trycloudflare.com"],
     proxy: {
       "/auth": process.env.AUTH_URL ?? "http://127.0.0.1:3001",
       "/applications": process.env.TRACKER_URL ?? "http://127.0.0.1:3002",
