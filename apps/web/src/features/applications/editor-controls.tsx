@@ -23,6 +23,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { DatePicker } from "@/components/ui/date-picker";
+import { DateTimePicker } from "@/components/ui/date-time-picker";
 import { Textarea } from "@/components/ui/textarea";
 import { Plus, Trash2 } from "lucide-react";
 import { type Entry, type Stage } from "../../types/application";
@@ -62,7 +63,7 @@ export function FieldGrid({
             }
           >
             <Label
-              htmlFor={field.type === "select" || field.type === "date" ? undefined : inputId}
+              htmlFor={field.type === "select" || field.type === "date" || field.type === "datetime-local" ? undefined : inputId}
               className="text-xs font-medium text-foreground/85"
             >
               {field.label}
@@ -103,6 +104,8 @@ export function FieldGrid({
                   ))}
                 </SelectContent>
               </Select>
+            ) : field.type === "datetime-local" ? (
+              <DateTimePicker label={field.label} value={value} onChange={(date) => change(field.name, date)} />
             ) : field.type === "date" ? (
               <DatePicker label={field.label} value={value} onChange={(date) => change(field.name, date)} />
             ) : field.type === "textarea" ? (
