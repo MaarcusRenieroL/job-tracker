@@ -1,4 +1,6 @@
 import {
+  createLogger,
+  registerApiDocs,
   registerErrorHandlers,
   registerObservability,
   registerSecurityHeaders,
@@ -8,6 +10,7 @@ import type { Collection } from "mongodb";
 import type { User } from "./auth/procedures.js";
 import type { RateLimitOptions } from "./auth/rate-limit.js";
 import { createAuthRoutes } from "./auth/routes.js";
+import { buildAuthOpenApiSpec } from "./openapi.js";
 
 export function createAuthApp({
   users,
@@ -21,9 +24,13 @@ export function createAuthApp({
   rateLimit?: RateLimitOptions;
 }) {
   const app = new Hono();
-  registerObservability(app, "auth");
+  const logger = createLogger("auth");
+  registerObservability(app, "auth", logger);
   registerSecurityHeaders(app);
-  registerErrorHandlers(app, "auth");
+  registerErrorHandlers(app, "auth", logger);
+  const authSpec = buildAuthOpenApiSpec();
+  registerApiDocs(app, { spec: authSpec });
+  registerApiDocs(app, { spec: authSpec, basePath: "/auth" });
 
   app.get("/health", (c) => c.json({ service: "auth", status: "ok" }));
 
@@ -32,7 +39,7 @@ export function createAuthApp({
       await pingDb();
       return c.json({ service: "auth", status: "ready" });
     } catch (error) {
-      console.error("Auth MongoDB readiness check failed", error);
+      logger.error({ err: error }, "Auth MongoDB readiness check failed");
       return c.json({ service: "auth", status: "unavailable" }, 503);
     }
   });

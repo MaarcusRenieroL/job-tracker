@@ -1,4 +1,6 @@
 import {
+  createLogger,
+  registerApiDocs,
   registerErrorHandlers,
   registerObservability,
   registerSecurityHeaders,
@@ -9,6 +11,8 @@ import type { AiRuntimeOptions } from "./applications/ai/index.js";
 import { createApplicationRoutes } from "./applications/routes.js";
 import type { Application } from "./applications/schema.js";
 import { createRequireAuth, type VerifyTokenFn } from "./auth/require-auth.js";
+import { trackerGuideHtml } from "./guide.js";
+import { buildTrackerOpenApiSpec } from "./openapi.js";
 import { createProfileRoutes, type Profile } from "./profile/routes.js";
 import { checkAuthReadiness } from "./system/auth-readiness.js";
 
@@ -28,9 +32,14 @@ export function createTrackerApp({
   aiOptions?: AiRuntimeOptions;
 }) {
   const app = new Hono();
-  const { recordAiCall } = registerObservability(app, "tracker");
+  const logger = createLogger("tracker");
+  const { recordAiCall } = registerObservability(app, "tracker", logger);
   registerSecurityHeaders(app);
-  registerErrorHandlers(app, "tracker");
+  registerErrorHandlers(app, "tracker", logger);
+  registerApiDocs(app, {
+    spec: buildTrackerOpenApiSpec(),
+    guideHtml: trackerGuideHtml,
+  });
 
   const authMiddleware = createRequireAuth(verifyToken);
 
@@ -41,7 +50,7 @@ export function createTrackerApp({
       await pingDb();
       return c.json({ service: "tracker", status: "ready" });
     } catch (error) {
-      console.error("Tracker MongoDB readiness check failed", error);
+      logger.error({ err: error }, "Tracker MongoDB readiness check failed");
       return c.json({ service: "tracker", status: "unavailable" }, 503);
     }
   });

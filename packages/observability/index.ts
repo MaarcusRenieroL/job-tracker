@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { swaggerUI } from "@hono/swagger-ui";
 import {
   propagation,
   ROOT_CONTEXT,
@@ -12,6 +13,9 @@ import { Counter, Histogram, Registry } from "@prometheus-io/client";
 import type { Context, Hono } from "hono";
 import { routePath } from "hono/route";
 import type { ContentfulStatusCode } from "hono/utils/http-status";
+import pino, { type Logger } from "pino";
+
+export type { Logger };
 
 export type ErrorCode =
   | "VALIDATION_ERROR"
@@ -50,9 +54,29 @@ export class AppError extends Error {
   }
 }
 
+export function createLogger(service: string): Logger {
+  return pino({
+    level: process.env.LOG_LEVEL?.trim() || "info",
+    base: { service },
+    timestamp: pino.stdTimeFunctions.isoTime,
+    redact: {
+      paths: [
+        "req.headers.authorization",
+        "headers.authorization",
+        "password",
+        "accessToken",
+        "*.password",
+        "*.accessToken",
+      ],
+      censor: "[REDACTED]",
+    },
+  });
+}
+
 export function registerErrorHandlers<TEnv extends object>(
   app: Hono<TEnv>,
   service: string,
+  logger: Logger = createLogger(service),
 ) {
   app.notFound((c) =>
     c.json({ error: "Not found", code: "NOT_FOUND" satisfies ErrorCode }, 404),
@@ -74,18 +98,17 @@ export function registerErrorHandlers<TEnv extends object>(
           message: error.message,
         });
       }
-      console.warn(
-        JSON.stringify({
+      logger.warn(
+        {
           event: "http.error",
-          service,
           code: error.code,
           status: error.status,
-          message: error.message,
           ...(error.cause instanceof Error
             ? { cause: error.cause.message }
             : {}),
           ...traceFields,
-        }),
+        },
+        error.message,
       );
       return c.json(
         {
@@ -102,15 +125,15 @@ export function registerErrorHandlers<TEnv extends object>(
       code: SpanStatusCode.ERROR,
       message: error.message,
     });
-    console.error(
-      JSON.stringify({
+    logger.error(
+      {
         event: "http.unhandled_error",
-        service,
         code: "INTERNAL_ERROR",
         status: 500,
-        message: error.message,
+        err: error,
         ...traceFields,
-      }),
+      },
+      error.message,
     );
     return c.json(
       {
@@ -128,15 +151,42 @@ export function registerSecurityHeaders<TEnv extends object>(app: Hono<TEnv>) {
     c.header("X-Content-Type-Options", "nosniff");
     c.header("X-Frame-Options", "DENY");
     c.header("Referrer-Policy", "no-referrer");
-    if (c.req.path !== "/metrics") {
+    if (
+      c.req.path !== "/metrics" &&
+      c.req.path !== "/docs" &&
+      c.req.path !== "/guide" &&
+      c.req.path !== "/openapi.json"
+    ) {
       c.header("Cache-Control", "no-store");
     }
   });
 }
 
+export function registerApiDocs<TEnv extends object>(
+  app: Hono<TEnv>,
+  {
+    spec,
+    guideHtml,
+    basePath = "",
+  }: {
+    spec: Record<string, unknown>;
+    guideHtml?: string;
+    basePath?: string;
+  },
+) {
+  const prefix = basePath.replace(/\/+$/, "");
+  const specPath = `${prefix}/openapi.json`;
+  app.get(specPath, (c) => c.json(spec));
+  app.get(`${prefix}/docs`, swaggerUI({ url: specPath }));
+  if (guideHtml) {
+    app.get(`${prefix}/guide`, (c) => c.html(guideHtml));
+  }
+}
+
 export function registerObservability<TEnv extends object>(
   app: Hono<TEnv>,
   service: string,
+  logger: Logger = createLogger(service),
 ) {
   const { metricsRegistry, recordRequest, recordAiCall } =
     createMetricsRegistry();
@@ -181,10 +231,9 @@ export function registerObservability<TEnv extends object>(
           span.end();
 
           recordRequest(method, route, status, durationMs);
-          console.info(
-            JSON.stringify({
+          logger.info(
+            {
               event: "http.request",
-              service,
               requestId,
               method,
               route,
@@ -194,7 +243,8 @@ export function registerObservability<TEnv extends object>(
                 traceId: spanContext.traceId,
                 spanId: spanContext.spanId,
               }),
-            }),
+            },
+            `${method} ${route} ${status}`,
           );
         }
       },
@@ -206,7 +256,7 @@ export function registerObservability<TEnv extends object>(
     return c.body(await metricsRegistry.metrics());
   });
 
-  return { recordAiCall };
+  return { logger, recordAiCall };
 }
 
 function createMetricsRegistry() {
@@ -285,20 +335,20 @@ export function registerGracefulShutdown({
   server,
   tracing,
   onClose,
+  logger = createLogger(service),
 }: {
   service: string;
   server: { close: (cb?: (err?: Error) => void) => void };
   tracing?: { shutdown: () => Promise<void> };
   onClose?: () => Promise<void>;
+  logger?: Logger;
 }) {
   let shuttingDown = false;
 
   const shutdown = async (signal: string) => {
     if (shuttingDown) return;
     shuttingDown = true;
-    console.info(
-      JSON.stringify({ event: "service.shutdown", service, signal }),
-    );
+    logger.info({ event: "service.shutdown", signal }, `Shutting down on ${signal}`);
     await new Promise<void>((resolve) => server.close(() => resolve()));
     await Promise.allSettled([tracing?.shutdown(), onClose?.()]);
     process.exit(0);
