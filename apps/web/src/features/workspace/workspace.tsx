@@ -29,6 +29,10 @@ import { ApplicationFilters } from "./application-filters";
 import { ApplicationBoard } from "./application-board";
 import { ApplicationLedger } from "./application-ledger";
 import { ApplicationSummary } from "./application-summary";
+import {
+  filterApplications,
+  summarizeApplications,
+} from "./workspace-application-data";
 
 type PageId = "applications" | "agenda" | "offers" | "analytics";
 
@@ -105,63 +109,14 @@ export function Workspace({
   const { jobs, agenda, offerRows, error, loading, replace, move, deleteJob } =
     useWorkspaceData(session.token, agendaFrom, agendaTo);
 
-  const allTags = Array.from(
-    new Map(
-      jobs
-        .flatMap((job) => job.tags ?? [])
-        .map((t) => [t.toLowerCase(), t] as const),
-    ).values(),
-  ).sort((a, b) => a.localeCompare(b));
-
-  const visible = jobs.filter(
-    (job) =>
-      (!stage || stage === job.stage) &&
-      (!priorityFilter || job.priority === priorityFilter) &&
-      (!tagFilter.length ||
-        tagFilter.some((selected) => (job.tags ?? []).some((tag) => tag.toLowerCase() === selected.toLowerCase()))) &&
-      [
-        job.company,
-        job.role,
-        job.location,
-        job.source,
-        job.priority,
-        ...(job.skills ?? []),
-        ...(job.tags ?? []),
-      ]
-        .join(" ")
-        .toLowerCase()
-        .includes(query.trim().toLowerCase()),
-  );
-
-  const activeCount = jobs.filter(
-    (job) =>
-      ![
-        "Discovered",
-        "Saved",
-        "Rejected",
-        "Withdrawn",
-        "Ghosted",
-        "Offer",
-      ].includes(job.stage),
-  ).length;
-  const upcomingInterviews = jobs
-    .flatMap((job) => job.interviews ?? [])
-    .filter(
-      (round) =>
-        round.result === "Scheduled" && Date.parse(round.dateTime ?? "") >= now,
-    ).length;
-  const activeAssessments = jobs
-    .flatMap((job) => job.assessments ?? [])
-    .filter(
-      (item) => item.status === "Not started" || item.status === "In progress",
-    ).length;
-  const offersCount = Math.max(
-    jobs.filter((job) => job.stage === "Offer" || Boolean(job.offer)).length,
-    offerRows.length,
-  );
-  const highPriorityCount = jobs.filter(
-    (job) => job.priority === "High",
-  ).length;
+  const { allTags, visible } = filterApplications(jobs, {
+    query,
+    stage,
+    priorityFilter,
+    tagFilter,
+  });
+  const summary = summarizeApplications(jobs, offerRows.length, now);
+  const { offersCount } = summary;
 
   function resetFilters() {
     setStage("");
@@ -284,11 +239,7 @@ export function Workspace({
             <>
               <ApplicationSummary
                 total={jobs.length}
-                highPriorityCount={highPriorityCount}
-                activeCount={activeCount}
-                upcomingInterviews={upcomingInterviews}
-                activeAssessments={activeAssessments}
-                offersCount={offersCount}
+                {...summary}
                 agendaCount={agenda.length}
               />
 
