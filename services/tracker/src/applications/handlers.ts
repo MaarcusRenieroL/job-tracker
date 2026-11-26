@@ -1,5 +1,7 @@
 import type { Context } from "hono";
 import type { Collection } from "mongodb";
+import { z } from "zod";
+import { importPosting, ImportError } from "./import-posting.js";
 import type { TrackerEnv } from "../auth/require-auth.js";
 import { applicationSchema, updateSchema, type Application } from "./schema.js";
 import { createApplication, ownerFilter } from "./procedures.js";
@@ -29,6 +31,8 @@ export async function handleUpdate(
   applications: Collection<Application>,
   id: string,
 ) {
+  if (!/^[a-f0-9]{24}$/i.test(id))
+    return c.json({ error: "Application not found" }, 404);
   const input = updateSchema.safeParse(await c.req.json().catch(() => null));
   if (!input.success)
     return c.json(
@@ -74,4 +78,19 @@ export async function handleUpdate(
       409,
     );
   return c.json(updated);
+}
+
+export async function handleImport(c: ApplicationContext) {
+  const input = z
+    .strictObject({ url: z.url({ protocol: /^https?$/ }).max(2048) })
+    .safeParse(await c.req.json().catch(() => null));
+  if (!input.success)
+    return c.json({ error: "Enter a valid HTTP or HTTPS job URL." }, 400);
+  try {
+    return c.json(await importPosting(input.data.url));
+  } catch (error) {
+    if (error instanceof ImportError)
+      return c.json({ error: error.message }, 422);
+    throw error;
+  }
 }
