@@ -4,7 +4,7 @@ import { useController, useForm } from "react-hook-form";
 import { z } from "zod";
 import type { Application } from "@/types/application";
 import type { Profile } from "@/features/profile/profile";
-import { initialFields, localDateTime } from "./editor-form";
+import { initialFields, localDateTime, toEntryList } from "./editor-form";
 
 const jobUrl = z.url({ protocol: /^https?$/ });
 const entries = z.array(
@@ -54,9 +54,9 @@ export function useEditorForm(job: Application | undefined, profile: Profile) {
         resumeTextHtml: profile.resumeHtml ?? "",
       }),
     },
-    assessments: job?.assessments ?? [],
-    referrals: job?.referrals ?? [],
-    interviews: (job?.interviews ?? []).map((entry) => ({
+    assessments: toEntryList(job?.assessments),
+    referrals: toEntryList(job?.referrals),
+    interviews: toEntryList(job?.interviews).map((entry) => ({
       ...entry,
       dateTime: entry.dateTime ? localDateTime(entry.dateTime) : "",
     })),

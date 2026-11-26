@@ -34,8 +34,11 @@ export {
   type WorkModel,
 } from "@job-tracker/application-options";
 import type {
+  Assessment,
+  InterviewRound,
   OfferData,
   Priority,
+  ReferralContact,
   Stage,
   StageTransition,
   WorkModel,
@@ -52,7 +55,7 @@ export type Application = {
   stage: Stage;
   priority?: Priority;
   tags?: string[];
-  assessments?: Entry[];
+  assessments?: Assessment[];
   jobUrl?: string;
   location?: string;
   workModel?: WorkModel | string;
@@ -74,8 +77,8 @@ export type Application = {
   followUp?: string;
   rejectionReason?: string;
   offer?: OfferData;
-  referrals?: Entry[];
-  interviews?: Entry[];
+  referrals?: ReferralContact[];
+  interviews?: InterviewRound[];
   updatedAt?: string;
   createdAt?: string;
   history: StageTransition<string>[];

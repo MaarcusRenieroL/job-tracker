@@ -1,3 +1,4 @@
+import { AppError } from "@job-tracker/observability";
 import type { Context } from "hono";
 import type { Collection } from "mongodb";
 import { z } from "zod";
@@ -33,6 +34,32 @@ async function findApplicationWithProfile(
   return { application, profile };
 }
 
+async function runAiAction<T>(
+  action: () => Promise<T | null>,
+  unavailableMessage: string,
+  upstreamErrorMessage: string,
+): Promise<T> {
+  let result: T | null;
+  try {
+    result = await action();
+  } catch (cause) {
+    throw new AppError({
+      message: upstreamErrorMessage,
+      status: 502,
+      code: "AI_UPSTREAM_ERROR",
+      cause,
+    });
+  }
+  if (result === null) {
+    throw new AppError({
+      message: unavailableMessage,
+      status: 503,
+      code: "AI_UNAVAILABLE",
+    });
+  }
+  return result;
+}
+
 export async function handleExplain(
   c: Context<TrackerEnv>,
   applications: Collection<Application>,
@@ -44,10 +71,20 @@ export async function handleExplain(
     c.get("ownerId"),
     id,
   );
-  if (!application) return c.json({ error: "Application not found" }, 404);
+  if (!application) {
+    throw new AppError({
+      message: "Application not found",
+      status: 404,
+      code: "NOT_FOUND",
+    });
+  }
 
   if (!application.resumeText || !application.skills?.length) {
-    return c.json({ error: "Add resume text and required skills first" }, 400);
+    throw new AppError({
+      message: "Add resume text and required skills first",
+      status: 400,
+      code: "VALIDATION_ERROR",
+    });
   }
 
   const match = resumeMatch(
@@ -56,24 +93,13 @@ export async function handleExplain(
     application,
   );
 
-  try {
-    const explanation = await explainFit(application, match, aiOptions);
-    if (!explanation) {
-      return c.json(
-        { error: "Set OLLAMA_MODEL and start Ollama to explain job fit" },
-        503,
-      );
-    }
-    return c.json({ match, explanation });
-  } catch {
-    return c.json(
-      {
-        error:
-          "The local model could not explain job fit. Check Ollama and try again.",
-      },
-      502,
-    );
-  }
+  const explanation = await runAiAction(
+    () => explainFit(application, match, aiOptions),
+    "Set OLLAMA_MODEL and start Ollama to explain job fit",
+    "The local model could not explain job fit. Check Ollama and try again.",
+  );
+
+  return c.json({ match, explanation });
 }
 
 export async function handleInterviewPrep(
@@ -87,7 +113,13 @@ export async function handleInterviewPrep(
     c.get("ownerId"),
     id,
   );
-  if (!application) return c.json({ error: "Application not found" }, 404);
+  if (!application) {
+    throw new AppError({
+      message: "Application not found",
+      status: 404,
+      code: "NOT_FOUND",
+    });
+  }
 
   const hasPostingFacts = Boolean(
     application.description?.trim() ||
@@ -95,36 +127,21 @@ export async function handleInterviewPrep(
       application.responsibilities?.length,
   );
   if (!hasPostingFacts) {
-    return c.json(
-      {
-        error:
-          "Save a job description, required skills, or responsibilities first to generate interview prep.",
-      },
-      400,
-    );
+    throw new AppError({
+      message:
+        "Save a job description, required skills, or responsibilities first to generate interview prep.",
+      status: 400,
+      code: "VALIDATION_ERROR",
+    });
   }
 
-  try {
-    const prep = await generateInterviewPrep(application, aiOptions);
-    if (!prep) {
-      return c.json(
-        {
-          error:
-            "Set OLLAMA_MODEL and start Ollama to generate interview prep.",
-        },
-        503,
-      );
-    }
-    return c.json({ prep });
-  } catch {
-    return c.json(
-      {
-        error:
-          "The local model could not generate interview prep. Check Ollama and try again.",
-      },
-      502,
-    );
-  }
+  const prep = await runAiAction(
+    () => generateInterviewPrep(application, aiOptions),
+    "Set OLLAMA_MODEL and start Ollama to generate interview prep.",
+    "The local model could not generate interview prep. Check Ollama and try again.",
+  );
+
+  return c.json({ prep });
 }
 
 export async function handleReferralDraft(
@@ -145,33 +162,24 @@ export async function handleReferralDraft(
     (item) => item.id === referralId,
   );
   if (!application || !referral) {
-    return c.json({ error: "Referral not found" }, 404);
+    throw new AppError({
+      message: "Referral not found",
+      status: 404,
+      code: "NOT_FOUND",
+    });
   }
 
-  try {
-    const draft = await draftReferral(application, referral, {
-      ...aiOptions,
-      candidateName: profile?.name,
-    });
-    if (!draft) {
-      return c.json(
-        {
-          error:
-            "Set OLLAMA_MODEL and start Ollama to draft referral messages",
-        },
-        503,
-      );
-    }
-    return c.json({ draft });
-  } catch {
-    return c.json(
-      {
-        error:
-          "The local model could not draft a message. Check Ollama and try again.",
-      },
-      502,
-    );
-  }
+  const draft = await runAiAction(
+    () =>
+      draftReferral(application, referral, {
+        ...aiOptions,
+        candidateName: profile?.name,
+      }),
+    "Set OLLAMA_MODEL and start Ollama to draft referral messages",
+    "The local model could not draft a message. Check Ollama and try again.",
+  );
+
+  return c.json({ draft });
 }
 
 export async function handleCoverLetterDraft(
@@ -187,7 +195,13 @@ export async function handleCoverLetterDraft(
     c.get("ownerId"),
     id,
   );
-  if (!application) return c.json({ error: "Application not found" }, 404);
+  if (!application) {
+    throw new AppError({
+      message: "Application not found",
+      status: 404,
+      code: "NOT_FOUND",
+    });
+  }
 
   const resumeText = application.resumeText || profile?.resumeText;
   const hasPostingDetails = Boolean(
@@ -197,40 +211,29 @@ export async function handleCoverLetterDraft(
   );
 
   if (!resumeText?.trim() || !hasPostingDetails) {
-    return c.json(
-      {
-        error:
-          "Save resume text and job description or required skills first to draft a cover letter.",
-      },
-      400,
-    );
+    throw new AppError({
+      message:
+        "Save resume text and job description or required skills first to draft a cover letter.",
+      status: 400,
+      code: "VALIDATION_ERROR",
+    });
   }
 
-  try {
-    const draft = await draftCoverLetter(
-      application,
-      {
-        name: profile?.name,
-        resumeText: profile?.resumeText,
-      },
-      aiOptions,
-    );
-    if (!draft) {
-      return c.json(
-        { error: "Set OLLAMA_MODEL and start Ollama to draft cover letters." },
-        503,
-      );
-    }
-    return c.json({ draft });
-  } catch {
-    return c.json(
-      {
-        error:
-          "The local model could not draft a cover letter. Check Ollama and try again.",
-      },
-      502,
-    );
-  }
+  const draft = await runAiAction(
+    () =>
+      draftCoverLetter(
+        application,
+        {
+          name: profile?.name,
+          resumeText: profile?.resumeText,
+        },
+        aiOptions,
+      ),
+    "Set OLLAMA_MODEL and start Ollama to draft cover letters.",
+    "The local model could not draft a cover letter. Check Ollama and try again.",
+  );
+
+  return c.json({ draft });
 }
 
 export async function handleFollowUpDraft(
@@ -243,10 +246,12 @@ export async function handleFollowUpDraft(
   const rawBody = await c.req.json().catch(() => ({}));
   const parsedBody = followUpRequestSchema.safeParse(rawBody ?? {});
   if (!parsedBody.success) {
-    return c.json(
-      { error: "Invalid follow-up options", issues: parsedBody.error.issues },
-      400,
-    );
+    throw new AppError({
+      message: "Invalid follow-up options",
+      status: 400,
+      code: "VALIDATION_ERROR",
+      issues: parsedBody.error.issues,
+    });
   }
 
   const { application, profile } = await findApplicationWithProfile(
@@ -255,35 +260,28 @@ export async function handleFollowUpDraft(
     c.get("ownerId"),
     id,
   );
-  if (!application) return c.json({ error: "Application not found" }, 404);
-
-  try {
-    const draft = await draftFollowUp(
-      application,
-      {
-        name: profile?.name,
-        resumeText: profile?.resumeText,
-      },
-      parsedBody.data,
-      aiOptions,
-    );
-    if (!draft) {
-      return c.json(
-        {
-          error:
-            "Set OLLAMA_MODEL and start Ollama to draft follow-up messages.",
-        },
-        503,
-      );
-    }
-    return c.json({ draft });
-  } catch {
-    return c.json(
-      {
-        error:
-          "The local model could not draft a follow-up message. Check Ollama and try again.",
-      },
-      502,
-    );
+  if (!application) {
+    throw new AppError({
+      message: "Application not found",
+      status: 404,
+      code: "NOT_FOUND",
+    });
   }
+
+  const draft = await runAiAction(
+    () =>
+      draftFollowUp(
+        application,
+        {
+          name: profile?.name,
+          resumeText: profile?.resumeText,
+        },
+        parsedBody.data,
+        aiOptions,
+      ),
+    "Set OLLAMA_MODEL and start Ollama to draft follow-up messages.",
+    "The local model could not draft a follow-up message. Check Ollama and try again.",
+  );
+
+  return c.json({ draft });
 }

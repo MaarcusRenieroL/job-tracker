@@ -1,4 +1,8 @@
-import { registerObservability } from "@job-tracker/observability";
+import {
+  registerErrorHandlers,
+  registerObservability,
+  registerSecurityHeaders,
+} from "@job-tracker/observability";
 import { Hono } from "hono";
 import type { Collection } from "mongodb";
 import type { AiRuntimeOptions } from "./applications/ai/index.js";
@@ -24,7 +28,10 @@ export function createTrackerApp({
   aiOptions?: AiRuntimeOptions;
 }) {
   const app = new Hono();
-  registerObservability(app, "tracker");
+  const { recordAiCall } = registerObservability(app, "tracker");
+  registerSecurityHeaders(app);
+  registerErrorHandlers(app, "tracker");
+
   const authMiddleware = createRequireAuth(verifyToken);
 
   app.get("/health", (c) => c.json({ service: "tracker", status: "ok" }));
@@ -56,7 +63,10 @@ export function createTrackerApp({
     createApplicationRoutes(applications, {
       profiles,
       authMiddleware,
-      aiOptions,
+      aiOptions: {
+        ...aiOptions,
+        recordMetric: aiOptions?.recordMetric ?? recordAiCall,
+      },
     }),
   );
 

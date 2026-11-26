@@ -1,5 +1,5 @@
-import type { Dispatch, SetStateAction } from "react";
-import { Check, Copy, CornerDownLeft, Sparkles } from "lucide-react";
+import { useState, type Dispatch, type SetStateAction } from "react";
+import { Check, Copy, CornerDownLeft, Loader2, Sparkles } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -66,6 +66,7 @@ export function EditorAssessments({
   token: string;
 }) {
   const { copied, copyText } = useCopyFeedback();
+  const [generatingPrep, setGeneratingPrep] = useState(false);
 
   const canGeneratePrep = Boolean(
     job &&
@@ -174,16 +175,29 @@ export function EditorAssessments({
                 isDisabled={pending || !canGeneratePrep}
                 onPress={() =>
                   void run(async () => {
-                    const result = await api<{ prep: InterviewPrep }>(
-                      `/applications/${job._id}/interview-prep`,
-                      token,
-                      "POST",
-                    );
-                    setPrep(result.prep);
+                    setGeneratingPrep(true);
+                    try {
+                      const result = await api<{ prep: InterviewPrep }>(
+                        `/applications/${job._id}/interview-prep`,
+                        token,
+                        "POST",
+                      );
+                      setPrep(result.prep);
+                    } finally {
+                      setGeneratingPrep(false);
+                    }
                   })
                 }
               >
-                <Sparkles className="size-3" /> Generate interview prep
+                {generatingPrep ? (
+                  <>
+                    <Loader2 className="size-3 animate-spin" /> Generating…
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="size-3" /> Generate interview prep
+                  </>
+                )}
               </Button>
             )}
           </div>

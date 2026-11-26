@@ -1,5 +1,5 @@
 import { useState, type Dispatch, type SetStateAction } from "react";
-import { CornerDownLeft, Sparkles, X } from "lucide-react";
+import { CornerDownLeft, Loader2, Sparkles, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   CardFrame,
@@ -41,6 +41,7 @@ export function PostingExtractionCard({
   const [suggestions, setSuggestions] =
     useState<EditableSuggestionDraft | null>(null);
   const [suggestionsApplied, setSuggestionsApplied] = useState(false);
+  const [extracting, setExtracting] = useState(false);
 
   const canExtract = (values.description?.trim().length ?? 0) >= 20;
 
@@ -94,28 +95,41 @@ export function PostingExtractionCard({
             isDisabled={pending || !canExtract}
             onPress={() =>
               void run(async () => {
+                setExtracting(true);
                 setSuggestionsApplied(false);
-                const result = await api<{ suggestions: PostingSuggestions }>(
-                  "/applications/extract",
-                  token,
-                  "POST",
-                  {
-                    description: values.description ?? "",
-                    ...(values.role?.trim()
-                      ? { role: values.role.trim() }
-                      : {}),
-                  },
-                );
-                setSuggestions({
-                  seniority: result.suggestions.seniority,
-                  skills: result.suggestions.skills.join(", "),
-                  responsibilities:
-                    result.suggestions.responsibilities.join("\n"),
-                });
+                try {
+                  const result = await api<{ suggestions: PostingSuggestions }>(
+                    "/applications/extract",
+                    token,
+                    "POST",
+                    {
+                      description: values.description ?? "",
+                      ...(values.role?.trim()
+                        ? { role: values.role.trim() }
+                        : {}),
+                    },
+                  );
+                  setSuggestions({
+                    seniority: result.suggestions.seniority,
+                    skills: result.suggestions.skills.join(", "),
+                    responsibilities:
+                      result.suggestions.responsibilities.join("\n"),
+                  });
+                } finally {
+                  setExtracting(false);
+                }
               })
             }
           >
-            <Sparkles className="size-3" /> Extract with AI
+            {extracting ? (
+              <>
+                <Loader2 className="size-3 animate-spin" /> Extracting…
+              </>
+            ) : (
+              <>
+                <Sparkles className="size-3" /> Extract with AI
+              </>
+            )}
           </Button>
         </div>
       </CardFrameHeader>

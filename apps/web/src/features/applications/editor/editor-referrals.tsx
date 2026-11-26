@@ -1,5 +1,5 @@
 import { useState, type Dispatch, type SetStateAction } from "react";
-import { Check, Copy, CornerDownLeft, Sparkles } from "lucide-react";
+import { Check, Copy, CornerDownLeft, Loader2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   CardFrame,
@@ -36,6 +36,9 @@ export function EditorReferrals({
 }) {
   const [draftHtml, setDraftHtml] = useState("");
   const [targetReferralId, setTargetReferralId] = useState<string | null>(null);
+  const [draftingReferralId, setDraftingReferralId] = useState<string | null>(
+    null,
+  );
   const { copied, copyText } = useCopyFeedback();
 
   const targetReferral = referrals.find((item) => item.id === targetReferralId);
@@ -87,18 +90,31 @@ export function EditorReferrals({
                       isDisabled={pending || !isSaved}
                       onPress={() =>
                         void run(async () => {
-                          const result = await api<{ draft: string }>(
-                            `/applications/${job._id}/referrals/${entry.id}/draft`,
-                            token,
-                            "POST",
-                          );
-                          setDraft(result.draft);
-                          setDraftHtml("");
-                          setTargetReferralId(entry.id);
+                          setDraftingReferralId(entry.id);
+                          try {
+                            const result = await api<{ draft: string }>(
+                              `/applications/${job._id}/referrals/${entry.id}/draft`,
+                              token,
+                              "POST",
+                            );
+                            setDraft(result.draft);
+                            setDraftHtml("");
+                            setTargetReferralId(entry.id);
+                          } finally {
+                            setDraftingReferralId(null);
+                          }
                         })
                       }
                     >
-                      <Sparkles className="size-3" /> Draft with AI
+                      {draftingReferralId === entry.id ? (
+                        <>
+                          <Loader2 className="size-3 animate-spin" /> Drafting…
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="size-3" /> Draft with AI
+                        </>
+                      )}
                     </Button>
                   </div>
                 );

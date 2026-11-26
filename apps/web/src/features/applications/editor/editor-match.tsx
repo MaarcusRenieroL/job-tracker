@@ -18,8 +18,9 @@ import {
   ProgressLabel,
   ProgressValue,
 } from "@/components/ui/progress";
+import { useState } from "react";
 import { TabsContent } from "@/components/ui/tabs";
-import { CheckCircle2, FileCheck2, Sparkles } from "lucide-react";
+import { CheckCircle2, FileCheck2, Loader2, Sparkles } from "lucide-react";
 import { api } from "../../../lib/api";
 import type {
   Application,
@@ -107,18 +108,24 @@ export function EditorMatch({
   setExplanation: (explanation: FitExplanation) => void;
   token: string;
 }) {
+  const [explaining, setExplaining] = useState(false);
   const canEvaluate = Boolean(job.resumeText && job.skills?.length);
 
   async function requestExplanation() {
-    const result = await api<{ match?: Match; explanation: FitExplanation }>(
-      `/applications/${job._id}/match/explain`,
-      token,
-      "POST",
-    );
-    if (result.match) {
-      setMatch(result.match);
+    setExplaining(true);
+    try {
+      const result = await api<{ match?: Match; explanation: FitExplanation }>(
+        `/applications/${job._id}/match/explain`,
+        token,
+        "POST",
+      );
+      if (result.match) {
+        setMatch(result.match);
+      }
+      setExplanation(result.explanation);
+    } finally {
+      setExplaining(false);
     }
-    setExplanation(result.explanation);
   }
 
   return (
@@ -246,14 +253,22 @@ export function EditorMatch({
       <CardFrame>
         <CardFrameHeader>
           <CardFrameTitle>AI Job-Fit Explanation</CardFrameTitle>
-          <Button
+            <Button
             type="button"
             variant="outline"
             size="xs"
             isDisabled={pending || !canEvaluate}
             onPress={() => void run(requestExplanation)}
           >
-            <Sparkles className="size-3" /> Explain fit with AI
+            {explaining ? (
+              <>
+                <Loader2 className="size-3 animate-spin" /> Explaining…
+              </>
+            ) : (
+              <>
+                <Sparkles className="size-3" /> Explain fit with AI
+              </>
+            )}
           </Button>
         </CardFrameHeader>
         <CardFramePanel className="p-4">

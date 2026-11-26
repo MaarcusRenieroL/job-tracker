@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Check, Copy, CornerDownLeft, Sparkles } from "lucide-react";
+import { Check, Copy, CornerDownLeft, Loader2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   CardFrame,
@@ -32,6 +32,7 @@ export function OutreachDraftsCard({
   token: string;
 }) {
   const [outreachKind, setOutreachKind] = useState<OutreachKind | null>(null);
+  const [draftingKind, setDraftingKind] = useState<OutreachKind | null>(null);
   const [outreachDraft, setOutreachDraft] = useState("");
   const [outreachDraftHtml, setOutreachDraftHtml] = useState("");
   const [followUpRecipient, setFollowUpRecipient] = useState("");
@@ -53,18 +54,31 @@ export function OutreachDraftsCard({
               isDisabled={pending}
               onPress={() =>
                 void run(async () => {
-                  const result = await api<{ draft: string }>(
-                    `/applications/${job._id}/cover-letter/draft`,
-                    token,
-                    "POST",
-                  );
-                  setOutreachKind("cover-letter");
-                  setOutreachDraft(result.draft);
-                  setOutreachDraftHtml("");
+                  setDraftingKind("cover-letter");
+                  try {
+                    const result = await api<{ draft: string }>(
+                      `/applications/${job._id}/cover-letter/draft`,
+                      token,
+                      "POST",
+                    );
+                    setOutreachKind("cover-letter");
+                    setOutreachDraft(result.draft);
+                    setOutreachDraftHtml("");
+                  } finally {
+                    setDraftingKind(null);
+                  }
                 })
               }
             >
-              <Sparkles className="size-3" /> Draft cover letter
+              {draftingKind === "cover-letter" ? (
+                <>
+                  <Loader2 className="size-3 animate-spin" /> Drafting…
+                </>
+              ) : (
+                <>
+                  <Sparkles className="size-3" /> Draft cover letter
+                </>
+              )}
             </Button>
             <Button
               type="button"
@@ -73,26 +87,39 @@ export function OutreachDraftsCard({
               isDisabled={pending}
               onPress={() =>
                 void run(async () => {
-                  const result = await api<{ draft: string }>(
-                    `/applications/${job._id}/follow-up/draft`,
-                    token,
-                    "POST",
-                    {
-                      ...(followUpRecipient.trim()
-                        ? { recipient: followUpRecipient.trim() }
-                        : {}),
-                      ...(followUpNote.trim()
-                        ? { note: followUpNote.trim() }
-                        : {}),
-                    },
-                  );
-                  setOutreachKind("follow-up");
-                  setOutreachDraft(result.draft);
-                  setOutreachDraftHtml("");
+                  setDraftingKind("follow-up");
+                  try {
+                    const result = await api<{ draft: string }>(
+                      `/applications/${job._id}/follow-up/draft`,
+                      token,
+                      "POST",
+                      {
+                        ...(followUpRecipient.trim()
+                          ? { recipient: followUpRecipient.trim() }
+                          : {}),
+                        ...(followUpNote.trim()
+                          ? { note: followUpNote.trim() }
+                          : {}),
+                      },
+                    );
+                    setOutreachKind("follow-up");
+                    setOutreachDraft(result.draft);
+                    setOutreachDraftHtml("");
+                  } finally {
+                    setDraftingKind(null);
+                  }
                 })
               }
             >
-              <Sparkles className="size-3" /> Draft follow-up
+              {draftingKind === "follow-up" ? (
+                <>
+                  <Loader2 className="size-3 animate-spin" /> Drafting…
+                </>
+              ) : (
+                <>
+                  <Sparkles className="size-3" /> Draft follow-up
+                </>
+              )}
             </Button>
           </div>
         )}

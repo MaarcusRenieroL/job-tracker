@@ -22,12 +22,13 @@ export function useWorkspaceData(token: string, from: string, to: string) {
         if (active) setJobs(applications);
       })
       .catch((failure: Error) => {
-        if (active)
+        if (active) {
           setError(
             failure instanceof ApiError && failure.status === 401
               ? "Your session expired. Sign out and sign in again."
               : failure.message,
           );
+        }
       })
       .finally(() => {
         if (active) setLoading(false);
@@ -51,22 +52,24 @@ export function useWorkspaceData(token: string, from: string, to: string) {
       api<{ offers: OfferRow[] }>("/applications/offers", token),
     ]).then(([agendaResult, offersResult]) => {
       if (!active) return;
-      if (agendaResult.status === "fulfilled")
+      if (agendaResult.status === "fulfilled") {
         setAgenda(agendaResult.value.events);
-      else
+      } else {
         setError(
           agendaResult.reason instanceof Error
             ? agendaResult.reason.message
             : "Could not load agenda.",
         );
-      if (offersResult.status === "fulfilled")
+      }
+      if (offersResult.status === "fulfilled") {
         setOfferRows(offersResult.value.offers);
-      else
+      } else {
         setError(
           offersResult.reason instanceof Error
             ? offersResult.reason.message
             : "Could not load offers.",
         );
+      }
     });
     return () => {
       active = false;
@@ -84,6 +87,13 @@ export function useWorkspaceData(token: string, from: string, to: string) {
   async function move(job: Application, next: Stage) {
     if (job.stage === next) return;
     setError("");
+    const snapshot = jobs;
+    // Optimistically reflect the stage transition immediately for zero-latency board/table UX.
+    setJobs((previous) =>
+      previous.map((item) =>
+        item._id === job._id ? { ...item, stage: next } : item,
+      ),
+    );
     try {
       replace(
         await api<Application>(`/applications/${job._id}`, token, "PATCH", {
@@ -92,6 +102,7 @@ export function useWorkspaceData(token: string, from: string, to: string) {
         }),
       );
     } catch (failure) {
+      setJobs(snapshot);
       setError((failure as Error).message);
       try {
         const fresh = await api<{ applications: Application[] }>(
@@ -100,7 +111,7 @@ export function useWorkspaceData(token: string, from: string, to: string) {
         );
         setJobs(fresh.applications);
       } catch {
-        // Keep the original error visible if refreshing also fails.
+        // Keep the rollback snapshot and original error visible if refreshing fails.
       }
     }
   }

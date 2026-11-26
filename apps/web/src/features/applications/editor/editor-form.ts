@@ -11,6 +11,20 @@ export function editorFieldValues(key: string, value: string, html?: string) {
     : { [key]: value, [`${key}Html`]: html };
 }
 
+export function toEntryList<T extends { id: string }>(
+  items: readonly T[] | undefined,
+): Entry[] {
+  return (items ?? []).map((item) => {
+    const entry: Entry = { id: item.id };
+    for (const [key, value] of Object.entries(item)) {
+      if (typeof value === "string") {
+        entry[key] = value;
+      }
+    }
+    return entry;
+  });
+}
+
 export function initialFields(job?: Application) {
   const values: Record<string, string> = { stage: job?.stage ?? "Saved" };
   for (const field of [...postingFields, ...applicationFields]) {

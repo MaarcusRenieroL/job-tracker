@@ -1,3 +1,4 @@
+import { AppError } from "@job-tracker/observability";
 import type { Context } from "hono";
 import { z } from "zod";
 import type { TrackerEnv } from "../../auth/require-auth.js";
@@ -18,13 +19,23 @@ export async function handleImport(c: Context<TrackerEnv>) {
     await c.req.json().catch(() => null),
   );
   if (!input.success) {
-    return c.json({ error: "Enter a valid HTTP or HTTPS job URL." }, 400);
+    throw new AppError({
+      message: "Enter a valid HTTP or HTTPS job URL.",
+      status: 400,
+      code: "VALIDATION_ERROR",
+      issues: input.error.issues,
+    });
   }
   try {
     return c.json(await importPosting(input.data.url));
   } catch (error) {
     if (error instanceof ImportError) {
-      return c.json({ error: error.message }, 422);
+      throw new AppError({
+        message: error.message,
+        status: 422,
+        code: "UNPROCESSABLE_ENTITY",
+        cause: error,
+      });
     }
     throw error;
   }
@@ -38,39 +49,40 @@ export async function handleExtractPosting(
     await c.req.json().catch(() => null),
   );
   if (!input.success) {
-    return c.json(
-      {
-        error:
-          "Paste at least a short job description (20+ characters) to extract suggestions.",
-        issues: input.error.issues,
-      },
-      400,
-    );
+    throw new AppError({
+      message:
+        "Paste at least a short job description (20+ characters) to extract suggestions.",
+      status: 400,
+      code: "VALIDATION_ERROR",
+      issues: input.error.issues,
+    });
   }
 
+  let suggestions;
   try {
-    const suggestions = await extractPosting(
+    suggestions = await extractPosting(
       input.data.description,
       input.data.role,
       aiOptions,
     );
-    if (!suggestions) {
-      return c.json(
-        {
-          error:
-            "Set OLLAMA_MODEL and start Ollama to extract job posting suggestions.",
-        },
-        503,
-      );
-    }
-    return c.json({ suggestions });
-  } catch {
-    return c.json(
-      {
-        error:
-          "The local model could not extract posting details. Check Ollama and try again.",
-      },
-      502,
-    );
+  } catch (cause) {
+    throw new AppError({
+      message:
+        "The local model could not extract posting details. Check Ollama and try again.",
+      status: 502,
+      code: "AI_UPSTREAM_ERROR",
+      cause,
+    });
   }
+
+  if (!suggestions) {
+    throw new AppError({
+      message:
+        "Set OLLAMA_MODEL and start Ollama to extract job posting suggestions.",
+      status: 503,
+      code: "AI_UNAVAILABLE",
+    });
+  }
+
+  return c.json({ suggestions });
 }
