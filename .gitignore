@@ -5,3 +5,5 @@ coverage/
 .env.*
 !.env.example
 .local/
+.agents/
+apps/web/.impeccable/

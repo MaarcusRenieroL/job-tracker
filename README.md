@@ -93,7 +93,7 @@ Tracker defaults to the locally running Ollama server on port 11434. Use `OLLAMA
 
 ## AI assistance
 
-Codex assisted with planning, implementation, testing, and review. Impeccable supplied frontend design guidance. The optional runtime AI feature uses the configured Ollama model.
+Codex assisted with planning, implementation, testing, and review. Antigravity built the five editorial AI features and the full-stack refactor on top of Codex's work. Impeccable supplied frontend design guidance. The optional runtime AI feature uses the configured Ollama model and requires the `ai` profile (`docker compose --profile ai up --build -d`).
 
 ## Tracker API for priorities, assessments, agenda, and offers
 
