@@ -30,6 +30,7 @@ export {
   type Priority,
   type ReferralContact,
   type ReferralStatus,
+  type ResumeVersion,
   type Stage,
   type WorkModel,
 } from "@job-tracker/application-options";

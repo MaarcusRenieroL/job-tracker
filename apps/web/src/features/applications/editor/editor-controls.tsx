@@ -27,21 +27,34 @@ import { DateTimePicker } from "@/components/ui/date-time-picker";
 import { RichTextInput } from "@/components/ui/rich-text-editor";
 import { Textarea } from "@/components/ui/textarea";
 import { Plus, Trash2 } from "lucide-react";
-import { type Entry, type Stage } from "../../../types/application";
+import { type Entry, type ResumeVersion, type Stage } from "../../../types/application";
 
 import { editorFieldValues } from "./editor-form";
 import { NONE_KEY, type Field } from "./editor-fields";
+
+const CUSTOM_VERSION_KEY = "__custom-resume-version";
+
+function resumeVersionLabel(version: ResumeVersion) {
+  return `Resume · ${new Date(version.createdAt).toLocaleString(undefined, {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  })}`;
+}
 
 export function FieldGrid({
   fields,
   values,
   change,
   idPrefix,
+  resumeVersions,
 }: {
   fields: Field[];
   values: Record<string, string | undefined>;
   change: (key: string, value: string, html?: string) => void;
   idPrefix: string;
+  resumeVersions?: ResumeVersion[];
 }) {
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -54,6 +67,12 @@ export function FieldGrid({
           field.name === "employee" ||
           field.name === "dateTime" ||
           field.name === "title";
+        const savedVersion =
+          field.name === "resumeVersion"
+            ? resumeVersions?.find(
+                (version) => resumeVersionLabel(version) === value,
+              )
+            : undefined;
 
         return (
           <div
@@ -74,7 +93,77 @@ export function FieldGrid({
               {isRequired && <span className="text-destructive">*</span>}
             </Label>
 
-            {field.type === "select" ? (
+            {field.name === "resumeVersion" && resumeVersions?.length ? (
+              <div className="flex flex-col gap-2">
+                <Select
+                  aria-label={field.label}
+                  selectedKey={
+                    savedVersion?.id ??
+                    (value ? CUSTOM_VERSION_KEY : NONE_KEY)
+                  }
+                  placeholder="Link a saved resume version…"
+                  onSelectionChange={(key) => {
+                    if (key === null || key === CUSTOM_VERSION_KEY) return;
+                    if (key === NONE_KEY) {
+                      change("resumeVersion", "");
+                      return;
+                    }
+                    const version = resumeVersions.find(
+                      (item) => item.id === key,
+                    );
+                    if (!version) return;
+                    change("resumeVersion", resumeVersionLabel(version));
+                    change(
+                      "resumeText",
+                      version.resumeText,
+                      version.resumeHtml ?? "",
+                    );
+                  }}
+                  className="w-full"
+                >
+                  <SelectTrigger className="w-full bg-background">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem id={NONE_KEY} textValue="No linked version">
+                      <span className="text-muted-foreground">
+                        No linked version
+                      </span>
+                    </SelectItem>
+                    {resumeVersions.map((version) => (
+                      <SelectItem
+                        key={version.id}
+                        id={version.id}
+                        textValue={resumeVersionLabel(version)}
+                      >
+                        {resumeVersionLabel(version)}
+                      </SelectItem>
+                    ))}
+                    {value && !savedVersion && (
+                      <SelectItem
+                        id={CUSTOM_VERSION_KEY}
+                        textValue={`Custom · ${value}`}
+                      >
+                        Custom · {value}
+                      </SelectItem>
+                    )}
+                  </SelectContent>
+                </Select>
+                <Input
+                  id={inputId}
+                  value={value}
+                  placeholder={field.placeholder}
+                  onChange={(event) =>
+                    change(field.name, event.target.value)
+                  }
+                  className="bg-background"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Selecting a saved version also loads its resume text into this
+                  application.
+                </p>
+              </div>
+            ) : field.type === "select" ? (
               <Select
                 aria-label={field.label}
                 selectedKey={value ? value : field.allowClear ? NONE_KEY : null}

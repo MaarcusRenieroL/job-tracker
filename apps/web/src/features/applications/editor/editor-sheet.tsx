@@ -231,7 +231,7 @@ export function EditorSheet({
           </div>
 
           <div className="min-h-0 flex-1 overflow-y-auto px-6 py-5">
-            <EditorOverview job={job} values={values} setValues={setValues} pending={pending} run={run} token={token} />
+            <EditorOverview job={job} values={values} setValues={setValues} pending={pending} run={run} token={token} resumeVersions={profile.resumeVersions} />
 
             <EditorAssessments
               job={job}

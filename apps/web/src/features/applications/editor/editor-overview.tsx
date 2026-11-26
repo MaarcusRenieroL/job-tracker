@@ -6,7 +6,7 @@ import {
   CardFrameTitle,
 } from "@/components/ui/card-frame";
 import { TabsContent } from "@/components/ui/tabs";
-import type { Application } from "../../../types/application";
+import type { Application, ResumeVersion } from "../../../types/application";
 import { FieldGrid } from "./editor-controls";
 import { applicationFields, postingFields } from "./editor-fields";
 import { editorFieldValues } from "./editor-form";
@@ -25,6 +25,7 @@ export function EditorOverview({
   pending,
   run,
   token,
+  resumeVersions,
 }: {
   job?: Application;
   values: Record<string, string>;
@@ -32,6 +33,7 @@ export function EditorOverview({
   pending: boolean;
   run: (action: () => Promise<void>) => Promise<void>;
   token: string;
+  resumeVersions?: ResumeVersion[];
 }) {
   const change = (key: string, value: string, html?: string) =>
     setValues((previous) => ({
@@ -83,6 +85,7 @@ export function EditorOverview({
             values={values}
             change={change}
             idPrefix="application"
+            resumeVersions={resumeVersions}
           />
         </CardFramePanel>
       </CardFrame>
