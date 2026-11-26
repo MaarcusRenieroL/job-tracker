@@ -15,6 +15,7 @@ export function ProfileGate({
   signOut: () => void;
 }) {
   const [profile, setProfile] = useState<Profile | null | undefined>();
+  const [editing, setEditing] = useState(false);
   const [error, setError] = useState("");
   const [retry, setRetry] = useState(0);
   useEffect(() => {
@@ -52,5 +53,6 @@ export function ProfileGate({
         signOut={signOut}
       />
     );
-  return <Workspace session={session} signOut={signOut} profile={profile} />;
+  if (editing) return <Onboarding token={session.token} initialProfile={profile} complete={(updated) => { setProfile(updated); setEditing(false); }} cancel={() => setEditing(false)} signOut={signOut} />;
+  return <Workspace session={session} signOut={signOut} profile={profile} onEditProfile={() => setEditing(true)} />;
 }

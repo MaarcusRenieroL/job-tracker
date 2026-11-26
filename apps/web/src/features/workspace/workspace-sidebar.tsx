@@ -32,6 +32,7 @@ import {
   CalendarClock,
   ChevronsUpDown,
   LogOut,
+  FileUser,
   Moon,
   Plus,
   Search,
@@ -45,6 +46,7 @@ type PageId = "applications" | "agenda" | "offers" | "analytics";
 export function WorkspaceSidebar({
   page,
   setPage,
+  onEditProfile,
   jobs,
   agenda,
   offersCount,
@@ -57,6 +59,7 @@ export function WorkspaceSidebar({
   openApplicationById,
 }: {
   page: PageId;
+  onEditProfile: () => void;
   setPage: (page: PageId) => void;
   jobs: Application[];
   agenda: AgendaEvent[];
@@ -257,6 +260,7 @@ export function WorkspaceSidebar({
                   )}
                   {dark ? "Switch to light mode" : "Switch to dark mode"}
                 </DropdownMenuItem>
+                <DropdownMenuItem textValue="Profile and resume" onAction={onEditProfile}><FileUser className="size-4" /> Profile &amp; resume</DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   textValue="Sign out"

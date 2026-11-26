@@ -17,10 +17,12 @@ const schema = z.object({
 });
 
 export function Onboarding({
-  token, initialName, complete, signOut,
+  token, initialName, initialProfile, complete, signOut, cancel,
 }: {
   token: string;
   initialName?: string;
+  initialProfile?: Profile;
+  cancel?: () => void;
   complete: (profile: Profile) => void;
   signOut: () => void;
 }) {
@@ -30,7 +32,7 @@ export function Onboarding({
   const [fileName, setFileName] = useState("");
   const { register, control, setValue, handleSubmit, formState: { errors, isSubmitting } } = useForm<Profile>({
     resolver: zodResolver(schema),
-    defaultValues: { name: initialName ?? "", resumeText: "", resumeHtml: "" },
+    defaultValues: { name: initialProfile?.name ?? initialName ?? "", resumeText: initialProfile?.resumeText ?? "", resumeHtml: initialProfile?.resumeHtml ?? "" },
   });
   const resumeText = useWatch({ control, name: "resumeText" }) ?? "";
   const resumeHtml = useWatch({ control, name: "resumeHtml" }) ?? "";
@@ -74,7 +76,7 @@ export function Onboarding({
       <section className="mx-auto max-w-2xl rounded-xl border bg-card p-6 shadow-sm sm:p-8">
         <div className="mb-7 space-y-2">
           <p className="text-sm font-medium text-primary">Job Tracker</p>
-          <h1 className="text-2xl font-semibold">Set up your profile</h1>
+          <h1 className="text-2xl font-semibold">{initialProfile ? "Your profile & resume" : "Set up your profile"}</h1>
           <p className="text-sm leading-relaxed text-muted-foreground">Add your resume or describe your experience. We’ll use it when comparing jobs.</p>
         </div>
         <form className="flex flex-col gap-6" onSubmit={(event) => void submit(event)} noValidate>
@@ -83,6 +85,14 @@ export function Onboarding({
             <Input id="profile-name" autoComplete="name" maxLength={120} aria-invalid={!!errors.name} {...register("name")} />
             {errors.name && <p role="alert" className="text-xs text-destructive">{errors.name.message}</p>}
           </div>
+          {initialProfile && !!initialProfile.resumeVersions?.length && <div className="flex flex-col gap-2">
+            <label htmlFor="resume-history" className="text-sm font-medium">Previous resume versions</label>
+            <select id="resume-history" defaultValue="" className="h-9 rounded-md border bg-background px-3 text-sm" onChange={(event) => {
+              const version = initialProfile.resumeVersions?.find((item) => item.id === event.target.value);
+              if (version) { setValue("resumeText", version.resumeText, { shouldDirty: true, shouldValidate: true }); setValue("resumeHtml", version.resumeHtml ?? "", { shouldDirty: true }); }
+            }}><option value="">Select a version to edit</option>{[...initialProfile.resumeVersions].reverse().map((version) => <option key={version.id} value={version.id}>{new Date(version.createdAt).toLocaleString()}</option>)}</select>
+            <p className="text-xs text-muted-foreground">Selecting a version loads it for editing. Saving creates a new version.</p>
+          </div>}
           <div className="flex flex-col gap-2">
             <span className="text-sm font-medium">Upload your resume <span className="font-normal text-muted-foreground">(optional)</span></span>
             <label className={`flex min-h-36 cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed px-4 py-6 text-center transition-colors focus-within:ring-2 focus-within:ring-ring ${dragging ? "border-primary bg-primary/5" : "border-border hover:border-primary/60 hover:bg-muted/40"}`}
@@ -106,8 +116,8 @@ export function Onboarding({
           </div>
           {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
           <div className="flex flex-wrap items-center gap-3">
-            <Button type="submit" isDisabled={uploading || isSubmitting}>{uploading ? "Reading resume…" : isSubmitting ? "Saving…" : "Continue to dashboard"}</Button>
-            <Button type="button" variant="ghost" onPress={signOut}>Sign out</Button>
+            <Button type="submit" isDisabled={uploading || isSubmitting}>{uploading ? "Reading resume…" : isSubmitting ? "Saving…" : initialProfile ? "Save profile" : "Continue to dashboard"}</Button>
+            <Button type="button" variant="ghost" onPress={cancel ?? signOut}>{cancel ? "Back to dashboard" : "Sign out"}</Button>
           </div>
         </form>
       </section>

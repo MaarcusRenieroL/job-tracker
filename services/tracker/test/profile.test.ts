@@ -24,9 +24,10 @@ test(
         records.get(ownerId) ?? null,
       updateOne: async (
         { ownerId }: { ownerId: string },
-        update: { $set: Omit<Profile, "ownerId"> },
+        update: { $set: Omit<Profile, "ownerId">; $push?: { resumeVersions: { $each: NonNullable<Profile["resumeVersions"]>; $slice: number } } },
       ) => {
-        records.set(ownerId, { ownerId, ...update.$set });
+        const versions = [...(records.get(ownerId)?.resumeVersions ?? []), ...(update.$push?.resumeVersions.$each ?? [])].slice(-20);
+        records.set(ownerId, { ownerId, ...update.$set, resumeVersions: versions });
       },
     } as unknown as Collection<Profile>;
     const app = new Hono().route("/profile", createProfileRoutes(collection));
@@ -66,9 +67,9 @@ test(
       await (await app.request("/profile", { headers: headers(b) })).json(),
       { profile: null },
     );
-    assert.deepEqual(
-      await (await app.request("/profile", { headers: headers(a) })).json(),
-      { profile: { name: "A", resumeText: "TypeScript" } },
-    );
+    await app.request("/profile", { method: "PUT", headers: headers(a), body: JSON.stringify({ name: "A", resumeText: "TypeScript and React" }) });
+    const result = await (await app.request("/profile", { headers: headers(a) })).json() as { profile: Profile };
+    assert.equal(result.profile.resumeText, "TypeScript and React");
+    assert.deepEqual(result.profile.resumeVersions?.map((version) => version.resumeText), ["TypeScript", "TypeScript and React"]);
   },
 );

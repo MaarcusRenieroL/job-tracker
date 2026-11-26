@@ -92,10 +92,12 @@ export function Workspace({
   session,
   signOut,
   profile,
+  onEditProfile,
 }: {
   session: Session;
   signOut: () => void;
   profile: Profile;
+  onEditProfile: () => void;
 }) {
   const { dark, toggle } = useTheme();
   const [page, setPage] = useState<PageId>("applications");
@@ -270,6 +272,7 @@ export function Workspace({
       <WorkspaceSidebar
         page={page}
         setPage={setPage}
+        onEditProfile={onEditProfile}
         jobs={jobs}
         agenda={agenda}
         offersCount={offersCount}
