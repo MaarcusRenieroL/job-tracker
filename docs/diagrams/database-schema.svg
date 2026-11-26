@@ -1,0 +1,161 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 740" width="1280" height="740">
+  <defs>
+    <filter id="sketch" x="-3%" y="-3%" width="106%" height="106%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.025" numOctaves="3" seed="11" result="noise"/>
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="1.6" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+    <pattern id="dot-grid" width="24" height="24" patternUnits="userSpaceOnUse">
+      <circle cx="2" cy="2" r="1" fill="#dcdad0"/>
+    </pattern>
+    <marker id="arrow-violet" viewBox="0 0 12 12" refX="9" refY="6" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 1 2 L 10 6 L 1 10" fill="none" stroke="#6741d9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+    <marker id="arrow-green" viewBox="0 0 12 12" refX="9" refY="6" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 1 2 L 10 6 L 1 10" fill="none" stroke="#2f9e44" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+    <style>
+      .hand-title { font-family: 'Virgil', 'Segoe Print', 'Bradley Hand', 'Chalkboard SE', cursive, sans-serif; font-weight: 700; fill: #1e1e24; }
+      .hand-sub   { font-family: 'Virgil', 'Segoe Print', 'Bradley Hand', 'Chalkboard SE', cursive, sans-serif; font-weight: 600; fill: #495057; }
+      .label      { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Inter, sans-serif; font-size: 12.5px; fill: #2b2d42; }
+      .mono       { font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace; font-size: 12px; fill: #1e1e24; }
+      .mono-muted { font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace; font-size: 11px; fill: #6c757d; }
+      .badge      { font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace; font-size: 10.5px; font-weight: 700; }
+    </style>
+  </defs>
+
+  <!-- Canvas -->
+  <rect width="1280" height="740" rx="16" fill="#fdfdfb"/>
+  <rect width="1280" height="740" rx="16" fill="url(#dot-grid)"/>
+
+  <!-- Header -->
+  <text x="40" y="48" class="hand-title" font-size="26">MongoDB Database Schema &amp; Bounded Contexts</text>
+  <text x="40" y="72" class="hand-sub" font-size="14">Strict database-per-service isolation · Zero cross-DB joins · Embedded subdocuments for atomic optimistic concurrency</text>
+
+  <!-- LEFT ZONE: job_tracker_auth -->
+  <rect x="36" y="100" width="330" height="330" rx="16" fill="#f3f0ff" fill-opacity="0.55" stroke="#6741d9" stroke-width="2" stroke-dasharray="8 6" filter="url(#sketch)"/>
+  <text x="56" y="128" class="hand-title" font-size="17" fill="#5f3dc4">DB: job_tracker_auth</text>
+  <text x="56" y="146" class="mono-muted">Owned exclusively by services/auth</text>
+
+  <!-- users collection -->
+  <g filter="url(#sketch)">
+    <rect x="56" y="166" width="290" height="236" rx="12" fill="#ffffff" stroke="#6741d9" stroke-width="2.2"/>
+    <rect x="56" y="166" width="290" height="38" rx="12" fill="#e5dbff" stroke="#6741d9" stroke-width="2"/>
+  </g>
+  <text x="74" y="191" class="mono" font-weight="700" fill="#5f3dc4">users</text>
+  <text x="278" y="190" class="badge" fill="#5f3dc4">COLLECTION</text>
+
+  <text x="74" y="226" class="mono">_id</text>          <text x="196" y="226" class="mono-muted">ObjectId (PK)</text>
+  <text x="74" y="250" class="mono">email</text>        <text x="196" y="250" class="mono-muted">string (UNIQUE)</text>
+  <text x="74" y="274" class="mono">name</text>         <text x="196" y="274" class="mono-muted">string</text>
+  <text x="74" y="298" class="mono">passwordHash</text> <text x="196" y="298" class="mono-muted">string (Argon2id)</text>
+  <text x="74" y="322" class="mono">createdAt</text>    <text x="196" y="322" class="mono-muted">Date</text>
+
+  <rect x="72" y="346" width="258" height="38" rx="8" fill="#f3f0ff" stroke="#b197fc" stroke-width="1.4" filter="url(#sketch)"/>
+  <text x="84" y="370" class="mono-muted" fill="#5f3dc4">INDEX: { email: 1 } unique</text>
+
+  <!-- Trust Boundary Callout -->
+  <g filter="url(#sketch)">
+    <rect x="36" y="458" width="330" height="128" rx="14" fill="#fff9db" stroke="#e67700" stroke-width="2"/>
+  </g>
+  <text x="56" y="486" class="hand-title" font-size="16" fill="#d9480f">Identity Link (No Cross-DB Join)</text>
+  <text x="56" y="510" class="label">1. Auth signs <tspan class="mono">users._id</tspan> into JWT <tspan class="mono">sub</tspan></text>
+  <text x="56" y="532" class="label">2. Tracker verifies Ed25519 signature</text>
+  <text x="56" y="554" class="label">3. Every query filters by <tspan class="mono">ownerId === sub</tspan></text>
+
+  <!-- RIGHT ZONE: job_tracker_tracker -->
+  <rect x="424" y="100" width="820" height="606" rx="16" fill="#ebfbee" fill-opacity="0.5" stroke="#2f9e44" stroke-width="2" stroke-dasharray="8 6" filter="url(#sketch)"/>
+  <text x="444" y="128" class="hand-title" font-size="17" fill="#2b8a3e">DB: job_tracker_tracker</text>
+  <text x="444" y="146" class="mono-muted">Owned exclusively by services/tracker</text>
+
+  <!-- profiles collection -->
+  <g filter="url(#sketch)">
+    <rect x="446" y="166" width="356" height="222" rx="12" fill="#ffffff" stroke="#2f9e44" stroke-width="2.2"/>
+    <rect x="446" y="166" width="356" height="38" rx="12" fill="#d3f9d8" stroke="#2f9e44" stroke-width="2"/>
+  </g>
+  <text x="464" y="191" class="mono" font-weight="700" fill="#2b8a3e">profiles</text>
+  <text x="716" y="190" class="badge" fill="#2b8a3e">COLLECTION</text>
+
+  <text x="464" y="226" class="mono">_id</text>             <text x="606" y="226" class="mono-muted">ObjectId (PK)</text>
+  <text x="464" y="248" class="mono">ownerId</text>         <text x="606" y="248" class="mono-muted">string (UNIQUE)</text>
+  <text x="464" y="270" class="mono">name</text>            <text x="606" y="270" class="mono-muted">string</text>
+  <text x="464" y="292" class="mono">resumeText / Html</text><text x="606" y="292" class="mono-muted">string</text>
+  <text x="464" y="314" class="mono">resumeVersions[]</text><text x="606" y="314" class="mono-muted">capped ($slice: -20)</text>
+
+  <rect x="462" y="334" width="324" height="38" rx="8" fill="#ebfbee" stroke="#8ce99a" stroke-width="1.4" filter="url(#sketch)"/>
+  <text x="474" y="358" class="mono-muted" fill="#2b8a3e">INDEX: { ownerId: 1 } unique</text>
+
+  <!-- applications collection -->
+  <g filter="url(#sketch)">
+    <rect x="446" y="410" width="356" height="274" rx="12" fill="#ffffff" stroke="#2f9e44" stroke-width="2.2"/>
+    <rect x="446" y="410" width="356" height="38" rx="12" fill="#d3f9d8" stroke="#2f9e44" stroke-width="2"/>
+  </g>
+  <text x="464" y="435" class="mono" font-weight="700" fill="#2b8a3e">applications</text>
+  <text x="716" y="434" class="badge" fill="#2b8a3e">COLLECTION</text>
+
+  <text x="464" y="470" class="mono">_id / ownerId</text>     <text x="606" y="470" class="mono-muted">ObjectId / string</text>
+  <text x="464" y="492" class="mono">company / role</text>    <text x="606" y="492" class="mono-muted">string (max 120)</text>
+  <text x="464" y="514" class="mono">stage / priority</text>  <text x="606" y="514" class="mono-muted">11-stage enum / P</text>
+  <text x="464" y="536" class="mono">workModel / tags[]</text><text x="606" y="536" class="mono-muted">enum / string[]</text>
+  <text x="464" y="558" class="mono">skills / resp[]</text>   <text x="606" y="558" class="mono-muted">string[]</text>
+  <text x="464" y="580" class="mono">version</text>           <text x="606" y="580" class="mono-muted">int (OCC -&gt; HTTP 409)</text>
+  <text x="464" y="602" class="mono">updatedAt</text>         <text x="606" y="602" class="mono-muted">Date</text>
+
+  <rect x="462" y="622" width="324" height="44" rx="8" fill="#ebfbee" stroke="#8ce99a" stroke-width="1.4" filter="url(#sketch)"/>
+  <text x="474" y="641" class="mono-muted" fill="#2b8a3e">INDEX: { ownerId: 1, updatedAt: -1 }</text>
+  <text x="474" y="657" class="mono-muted" fill="#2b8a3e">ATOMIC PATCH: { ownerId, _id, version }</text>
+
+  <!-- Embedded Subdocuments column -->
+  <text x="862" y="182" class="hand-title" font-size="16" fill="#1864ab">Embedded inside applications</text>
+  <text x="862" y="200" class="mono-muted">Single-write atomicity · zero joins</text>
+
+  <!-- assessments[] -->
+  <g filter="url(#sketch)">
+    <rect x="862" y="218" width="356" height="82" rx="10" fill="#e7f5ff" stroke="#1971c2" stroke-width="1.9"/>
+  </g>
+  <text x="878" y="242" class="mono" font-weight="700" fill="#1864ab">assessments[]</text>
+  <text x="878" y="264" class="mono-muted">id, title, type, status, dueDate, repoUrl</text>
+  <text x="878" y="284" class="mono-muted">notes / notesHtml</text>
+
+  <!-- interviews[] -->
+  <g filter="url(#sketch)">
+    <rect x="862" y="314" width="356" height="82" rx="10" fill="#e7f5ff" stroke="#1971c2" stroke-width="1.9"/>
+  </g>
+  <text x="878" y="338" class="mono" font-weight="700" fill="#1864ab">interviews[]</text>
+  <text x="878" y="360" class="mono-muted">id, type, dateTime, result, meetingLink</text>
+  <text x="878" y="380" class="mono-muted">topics, preparation, questions</text>
+
+  <!-- referrals[] -->
+  <g filter="url(#sketch)">
+    <rect x="862" y="410" width="356" height="82" rx="10" fill="#e7f5ff" stroke="#1971c2" stroke-width="1.9"/>
+  </g>
+  <text x="878" y="434" class="mono" font-weight="700" fill="#1864ab">referrals[]</text>
+  <text x="878" y="456" class="mono-muted">id, employee, status, profileUrl</text>
+  <text x="878" y="476" class="mono-muted">message / messageHtml (Ollama draftable)</text>
+
+  <!-- offer -->
+  <g filter="url(#sketch)">
+    <rect x="862" y="506" width="356" height="82" rx="10" fill="#fff4e6" stroke="#d9480f" stroke-width="1.9"/>
+  </g>
+  <text x="878" y="530" class="mono" font-weight="700" fill="#d9480f">offer (optional object)</text>
+  <text x="878" y="552" class="mono-muted">currency (ISO-3), base, bonus, equity</text>
+  <text x="878" y="572" class="mono-muted">deadline, notes</text>
+
+  <!-- history[] -->
+  <g filter="url(#sketch)">
+    <rect x="862" y="602" width="356" height="72" rx="10" fill="#f1f3f5" stroke="#495057" stroke-width="1.9"/>
+  </g>
+  <text x="878" y="626" class="mono" font-weight="700" fill="#343a40">history[] (append-only audit)</text>
+  <text x="878" y="648" class="mono-muted">stage, changedAt, note</text>
+
+  <!-- Arrows -->
+  <!-- users._id -> profiles.ownerId & applications.ownerId -->
+  <path d="M 346 224 C 392 224, 396 244, 444 244" fill="none" stroke="#6741d9" stroke-width="2.2" stroke-dasharray="6 4" marker-end="url(#arrow-violet)" filter="url(#sketch)"/>
+  <path d="M 346 224 C 398 224, 386 468, 444 468" fill="none" stroke="#6741d9" stroke-width="2.2" stroke-dasharray="6 4" marker-end="url(#arrow-violet)" filter="url(#sketch)"/>
+
+  <!-- applications -> embedded subdocs -->
+  <path d="M 802 456 C 832 456, 830 258, 860 258" fill="none" stroke="#2f9e44" stroke-width="2" marker-end="url(#arrow-green)" filter="url(#sketch)"/>
+  <path d="M 802 478 C 832 478, 830 356, 860 356" fill="none" stroke="#2f9e44" stroke-width="2" marker-end="url(#arrow-green)" filter="url(#sketch)"/>
+  <path d="M 802 500 C 832 500, 830 452, 860 452" fill="none" stroke="#2f9e44" stroke-width="2" marker-end="url(#arrow-green)" filter="url(#sketch)"/>
+  <path d="M 802 528 C 832 528, 830 546, 860 546" fill="none" stroke="#2f9e44" stroke-width="2" marker-end="url(#arrow-green)" filter="url(#sketch)"/>
+  <path d="M 802 560 C 832 560, 830 638, 860 638" fill="none" stroke="#2f9e44" stroke-width="2" marker-end="url(#arrow-green)" filter="url(#sketch)"/>
+</svg>

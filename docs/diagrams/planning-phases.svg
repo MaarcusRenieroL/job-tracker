@@ -1,0 +1,109 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 540" width="1280" height="540">
+  <defs>
+    <filter id="sketch" x="-3%" y="-3%" width="106%" height="106%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.025" numOctaves="3" seed="19" result="noise"/>
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="1.6" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+    <pattern id="dot-grid" width="24" height="24" patternUnits="userSpaceOnUse">
+      <circle cx="2" cy="2" r="1" fill="#dcdad0"/>
+    </pattern>
+    <marker id="arrow-dark" viewBox="0 0 12 12" refX="9" refY="6" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 1 2 L 10 6 L 1 10" fill="none" stroke="#343a40" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+    <style>
+      .hand-title { font-family: 'Virgil', 'Segoe Print', 'Bradley Hand', 'Chalkboard SE', cursive, sans-serif; font-weight: 700; fill: #1e1e24; }
+      .hand-sub   { font-family: 'Virgil', 'Segoe Print', 'Bradley Hand', 'Chalkboard SE', cursive, sans-serif; font-weight: 600; fill: #495057; }
+      .label      { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Inter, sans-serif; font-size: 12.5px; fill: #2b2d42; }
+      .mono       { font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace; font-size: 11.5px; fill: #343a40; }
+      .pill-text  { font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace; font-size: 11px; font-weight: 700; }
+    </style>
+  </defs>
+
+  <!-- Canvas -->
+  <rect width="1280" height="540" rx="16" fill="#fdfdfb"/>
+  <rect width="1280" height="540" rx="16" fill="url(#dot-grid)"/>
+
+  <!-- Header -->
+  <text x="40" y="48" class="hand-title" font-size="26">24-Hour AI-Assisted Delivery Roadmap</text>
+  <text x="40" y="72" class="hand-sub" font-size="14">Built end to end within the 24h evaluation window · OpenCode + Impeccable + local Ollama (qwen2.5:1.5b)</text>
+
+  <!-- Phase 1 -->
+  <g filter="url(#sketch)">
+    <rect x="36" y="114" width="278" height="290" rx="14" fill="#f3f0ff" stroke="#6741d9" stroke-width="2.4"/>
+    <rect x="52" y="130" width="84" height="24" rx="8" fill="#6741d9"/>
+  </g>
+  <text x="66" y="146" class="pill-text" fill="#ffffff">PHASE 01</text>
+  <text x="52" y="182" class="hand-title" font-size="18" fill="#5f3dc4">Foundation &amp; Auth</text>
+  <text x="52" y="202" class="mono">Commit 93fe960 -&gt; core stack</text>
+  <text x="52" y="232" class="label">• pnpm TypeScript monorepo</text>
+  <text x="52" y="256" class="label">• Auth service (Hono + Mongo)</text>
+  <text x="52" y="280" class="label">• Argon2id + Ed25519 JWTs</text>
+  <text x="52" y="304" class="label">• Tracker service scaffold</text>
+  <text x="52" y="328" class="label">• Docker Compose + auto</text>
+  <text x="64" y="346" class="label">key-gen init container</text>
+  <text x="52" y="378" class="mono" fill="#5f3dc4">✓ Runnable local stack</text>
+
+  <!-- Arrow 1->2 -->
+  <path d="M 314 258 L 344 258" fill="none" stroke="#343a40" stroke-width="2.2" marker-end="url(#arrow-dark)" filter="url(#sketch)"/>
+
+  <!-- Phase 2 -->
+  <g filter="url(#sketch)">
+    <rect x="348" y="114" width="278" height="290" rx="14" fill="#e7f5ff" stroke="#1971c2" stroke-width="2.4"/>
+    <rect x="364" y="130" width="84" height="24" rx="8" fill="#1971c2"/>
+  </g>
+  <text x="378" y="146" class="pill-text" fill="#ffffff">PHASE 02</text>
+  <text x="364" y="182" class="hand-title" font-size="18" fill="#1864ab">Domain &amp; Workspace</text>
+  <text x="364" y="202" class="mono">Core tracker + React UI</text>
+  <text x="364" y="232" class="label">• Shared Zod contracts pkg</text>
+  <text x="364" y="256" class="label">• 11-stage pipeline + OCC 409</text>
+  <text x="364" y="280" class="label">• Table, Kanban &amp; Agenda</text>
+  <text x="364" y="304" class="label">• Deterministic resume match</text>
+  <text x="364" y="328" class="label">• Offers, Recruiters, Analytics</text>
+  <text x="364" y="352" class="label">• CSV/JSON export &amp; import</text>
+  <text x="364" y="378" class="mono" fill="#1864ab">✓ Full CRUD &amp; views</text>
+
+  <!-- Arrow 2->3 -->
+  <path d="M 626 258 L 656 258" fill="none" stroke="#343a40" stroke-width="2.2" marker-end="url(#arrow-dark)" filter="url(#sketch)"/>
+
+  <!-- Phase 3 -->
+  <g filter="url(#sketch)">
+    <rect x="660" y="114" width="278" height="290" rx="14" fill="#ebfbee" stroke="#2f9e44" stroke-width="2.4"/>
+    <rect x="676" y="130" width="84" height="24" rx="8" fill="#2f9e44"/>
+  </g>
+  <text x="690" y="146" class="pill-text" fill="#ffffff">PHASE 03</text>
+  <text x="676" y="182" class="hand-title" font-size="18" fill="#2b8a3e">Hardening &amp; Obs</text>
+  <text x="676" y="202" class="mono">Security, tests &amp; telemetry</text>
+  <text x="676" y="232" class="label">• Pure DI app factories</text>
+  <text x="676" y="256" class="label">• AppError + Zod env config</text>
+  <text x="676" y="280" class="label">• Auth IP rate limiter (429)</text>
+  <text x="676" y="304" class="label">• SSRF-safe URL importer</text>
+  <text x="676" y="328" class="label">• Pino, Prometheus &amp; Jaeger</text>
+  <text x="676" y="352" class="label">• 20 unit &amp; route tests</text>
+  <text x="676" y="378" class="mono" fill="#2b8a3e">✓ Production-grade guardrails</text>
+
+  <!-- Arrow 3->4 -->
+  <path d="M 938 258 L 968 258" fill="none" stroke="#343a40" stroke-width="2.2" marker-end="url(#arrow-dark)" filter="url(#sketch)"/>
+
+  <!-- Phase 4 -->
+  <g filter="url(#sketch)">
+    <rect x="972" y="114" width="272" height="290" rx="14" fill="#fff4e6" stroke="#d9480f" stroke-width="2.4"/>
+    <rect x="988" y="130" width="84" height="24" rx="8" fill="#d9480f"/>
+  </g>
+  <text x="1002" y="146" class="pill-text" fill="#ffffff">PHASE 04</text>
+  <text x="988" y="182" class="hand-title" font-size="18" fill="#d9480f">Local AI &amp; Polish</text>
+  <text x="988" y="202" class="mono">Ollama, docs &amp; UX craft</text>
+  <text x="988" y="232" class="label">• 5 Ollama AI workflows</text>
+  <text x="988" y="256" class="label">• Scalar OpenAPI 3.1 (/docs)</text>
+  <text x="988" y="280" class="label">• PDF + 7-section Profile Studio</text>
+  <text x="988" y="304" class="label">• Live RHF + Zod validation</text>
+  <text x="988" y="328" class="label">• Dropdown rich-text editor</text>
+  <text x="988" y="352" class="label">• Rolldown code-splitting</text>
+  <text x="988" y="378" class="mono" fill="#d9480f">✓ Ready for submission</text>
+
+  <!-- Bottom CI Verification Strip -->
+  <g filter="url(#sketch)">
+    <rect x="36" y="434" width="1208" height="72" rx="14" fill="#f1f3f5" stroke="#495057" stroke-width="2" stroke-dasharray="8 5"/>
+  </g>
+  <text x="58" y="464" class="hand-title" font-size="16" fill="#2b2d42">Continuous Verification Gate (pnpm run ci · enforced via .githooks/pre-push)</text>
+  <text x="58" y="488" class="mono">oxlint (0 errors)  -&gt;  tsc --noEmit / -b (5 packages)  -&gt;  tsx --test (20/20 passing)  -&gt;  Vite 8 Rolldown build (163 kB entry)</text>
+</svg>

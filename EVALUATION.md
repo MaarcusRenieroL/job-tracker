@@ -6,7 +6,7 @@ This document maps the **Job Tracker** repository directly to each evaluation cr
 
 ## 1. Planning & 24-Hour Delivery Phases
 
-![24-Hour Delivery Phases](./docs/diagrams/planning-phases.png)
+![24-Hour Delivery Phases](./docs/diagrams/planning-phases.svg)
 
 All commits were authored within the 24-hour evaluation window starting from the initial scaffold commit (`93fe960`), progressing through four clean phases:
 1. **Foundation & Core Services:** pnpm TypeScript monorepo, `services/auth` (Argon2id + Ed25519 JWT), `services/tracker` (Hono + MongoDB), Docker Compose with automated key generation.
@@ -18,7 +18,7 @@ All commits were authored within the 24-hour evaluation window starting from the
 
 ## 2. Architecture & Service Communication
 
-![Microservice Architecture](./docs/diagrams/architecture.png)
+![Microservice Architecture](./docs/diagrams/architecture.svg)
 
 ### Workspace Structure
 ```text
@@ -77,7 +77,7 @@ All commits were authored within the 24-hour evaluation window starting from the
 
 ## 6. Database Schema (MongoDB)
 
-![MongoDB Database Schema](./docs/diagrams/database-schema.png)
+![MongoDB Database Schema](./docs/diagrams/database-schema.svg)
 
 - **Bounded-Context Isolation:** Auth uses `job_tracker_auth`; Tracker uses `job_tracker_tracker`. No shared tables or cross-service DB reads.
 - **Indexes:**

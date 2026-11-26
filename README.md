@@ -6,7 +6,7 @@ A local-first TypeScript microservice workspace for managing a job search end to
 
 ## Architecture & Service Communication
 
-![Job Tracker Architecture Diagram](./docs/diagrams/architecture.png)
+![Job Tracker Architecture Diagram](./docs/diagrams/architecture.svg)
 
 - **Auth Service (`services/auth`, port `3001`):** Owns user accounts, Argon2id password hashing, IP rate limiting, and 15-minute Ed25519 JWT issuance.
 - **Tracker Service (`services/tracker`, port `3002`):** Owns user profiles, job applications, deterministic resume matching, posting import, agenda/offer synthesis, and optional local Ollama AI workflows.
@@ -15,7 +15,7 @@ A local-first TypeScript microservice workspace for managing a job search end to
 
 ## Database Design (MongoDB)
 
-![MongoDB Database Schema](./docs/diagrams/database-schema.png)
+![MongoDB Database Schema](./docs/diagrams/database-schema.svg)
 
 Each service owns a separate MongoDB database:
 
