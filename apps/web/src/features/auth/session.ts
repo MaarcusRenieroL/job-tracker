@@ -1,4 +1,4 @@
-export type Session = { token: string; email: string };
+export type Session = { token: string; email: string; name?: string };
 export const sessionKey = "job-tracker-session";
 
 export function readSession(): Session | null {
@@ -10,7 +10,7 @@ export function readSession(): Session | null {
     if (!("token" in value) || !("email" in value)) return null;
     if (typeof value.token !== "string" || typeof value.email !== "string")
       return null;
-    return { token: value.token, email: value.email };
+    return { token: value.token, email: value.email, ...("name" in value && typeof value.name === "string" ? { name: value.name } : {}) };
   } catch {
     return null;
   }

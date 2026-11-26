@@ -23,14 +23,18 @@ import {
   ProgressValue,
 } from "@/components/ui/progress";
 import {
-  ArrowUpRight,
+  ArrowRight,
+  UserRound,
   BriefcaseBusiness,
   Lock,
   Mail,
   Moon,
   Sun,
 } from "lucide-react";
-import { useState, type FormEvent } from "react";
+import { useState } from "react";
+import { useForm, useWatch } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { api } from "../../lib/api";
 
 import type { Session } from "./session";
@@ -41,30 +45,36 @@ export function SignIn({ onSignIn }: { onSignIn: (session: Session) => void }) {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
 
-  async function submit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const fields = new FormData(event.currentTarget);
-    const credentials = {
-      email: String(fields.get("email")).trim(),
-      password: String(fields.get("password")),
-    };
+  const schema = z.object({
+    name: register ? z.string().trim().min(1, "Enter your name.").max(120) : z.string(),
+    email: z.string().trim().toLowerCase().pipe(z.email("Enter a valid email address.")),
+    password: z.string().min(12, "Use at least 12 characters.").max(128),
+  });
+  const form = useForm<z.infer<typeof schema>>({
+    resolver: zodResolver(schema),
+    defaultValues: { name: "", email: "", password: "" },
+  });
+  const password = useWatch({ control: form.control, name: "password" }) ?? "";
+  const passwordChecks = [
+    { label: "12 or more characters", met: password.length >= 12 },
+    { label: "Upper and lowercase letters", met: /[a-z]/.test(password) && /[A-Z]/.test(password) },
+    { label: "A number or symbol", met: /[^a-zA-Z]/.test(password) },
+  ];
+  const submit = form.handleSubmit(async ({ name, email, password }) => {
     setPending(true);
     setError("");
     try {
-      if (register) await api("/auth/register", undefined, "POST", credentials);
+      if (register) await api("/auth/register", undefined, "POST", { name, email, password });
       const { accessToken } = await api<{ accessToken: string }>(
-        "/auth/login",
-        undefined,
-        "POST",
-        credentials,
+        "/auth/login", undefined, "POST", { email, password },
       );
-      onSignIn({ token: accessToken, email: credentials.email });
+      onSignIn({ token: accessToken, email, ...(register ? { name } : {}) });
     } catch (failure) {
       setError((failure as Error).message);
     } finally {
       setPending(false);
     }
-  }
+  });
 
   return (
     <main className="grid min-h-dvh grid-cols-1 bg-background lg:grid-cols-[1.12fr_0.88fr]">
@@ -227,8 +237,19 @@ export function SignIn({ onSignIn }: { onSignIn: (session: Session) => void }) {
             <CardFramePanel className="p-5">
               <form
                 onSubmit={(event) => void submit(event)}
+                noValidate
                 className="flex flex-col gap-4"
               >
+                {register && (
+                  <div className="flex flex-col gap-1.5">
+                    <Label htmlFor="auth-name" className="text-xs">Full name</Label>
+                    <InputGroup className="h-9 bg-background">
+                      <InputGroupAddon><UserRound className="size-4" /></InputGroupAddon>
+                      <InputGroupInput id="auth-name" autoComplete="name" placeholder="Your name" aria-invalid={!!form.formState.errors.name} {...form.register("name")} />
+                    </InputGroup>
+                    {form.formState.errors.name && <p role="alert" className="text-xs text-destructive">{form.formState.errors.name.message}</p>}
+                  </div>
+                )}
                 <div className="flex flex-col gap-1.5">
                   <Label htmlFor="auth-email" className="text-xs">
                     Email address
@@ -239,8 +260,8 @@ export function SignIn({ onSignIn }: { onSignIn: (session: Session) => void }) {
                     </InputGroupAddon>
                     <InputGroupInput
                       id="auth-email"
-                      name="email"
                       type="email"
+                      {...form.register("email")}
                       autoComplete="email"
                       placeholder="you@example.com"
                       required
@@ -258,8 +279,8 @@ export function SignIn({ onSignIn }: { onSignIn: (session: Session) => void }) {
                     </InputGroupAddon>
                     <InputGroupInput
                       id="auth-password"
-                      name="password"
                       type="password"
+                      {...form.register("password")}
                       autoComplete={
                         register ? "new-password" : "current-password"
                       }
@@ -271,6 +292,14 @@ export function SignIn({ onSignIn }: { onSignIn: (session: Session) => void }) {
                   </InputGroup>
                 </div>
 
+                {register && password && (
+                  <ul className="grid gap-1 text-xs text-muted-foreground" aria-label="Password guidance">
+                    {passwordChecks.map(({ label, met }) => <li key={label} className={met ? "text-emerald-700 dark:text-emerald-400" : ""}>{met ? "✓" : "○"} {label}</li>)}
+                  </ul>
+                )}
+                {(form.formState.errors.email || form.formState.errors.password) && (
+                  <p role="alert" className="text-xs text-destructive">{form.formState.errors.email?.message || form.formState.errors.password?.message}</p>
+                )}
                 {error && (
                   <div
                     role="alert"
@@ -284,7 +313,7 @@ export function SignIn({ onSignIn }: { onSignIn: (session: Session) => void }) {
                   type="submit"
                   size="lg"
                   isDisabled={pending}
-                  className="mt-1 w-full justify-between"
+                  className="mt-2 w-full justify-center gap-2 font-semibold"
                 >
                   <span>
                     {pending
@@ -293,7 +322,7 @@ export function SignIn({ onSignIn }: { onSignIn: (session: Session) => void }) {
                         ? "Create account"
                         : "Sign in"}
                   </span>
-                  <ArrowUpRight className="size-4" />
+                  <ArrowRight className="size-4" />
                 </Button>
               </form>
             </CardFramePanel>
@@ -306,6 +335,7 @@ export function SignIn({ onSignIn }: { onSignIn: (session: Session) => void }) {
               size="sm"
               onPress={() => {
                 setRegister(!register);
+                form.clearErrors();
                 setError("");
               }}
             >

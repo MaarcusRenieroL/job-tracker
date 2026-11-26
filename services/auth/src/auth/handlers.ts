@@ -4,6 +4,7 @@ import { z } from "zod";
 import { registerUser, verifyCredentials, type User } from "./procedures.js";
 
 const registrationSchema = z.object({
+  name: z.string().trim().min(1).max(120).optional(),
   email: z.string().trim().toLowerCase().pipe(z.email()),
   password: z.string().min(12).max(128),
 });

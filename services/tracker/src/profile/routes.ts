@@ -7,19 +7,20 @@ import { requireAuth, type TrackerEnv } from "../auth/require-auth.js";
 const profileSchema = z.strictObject({
   name: z.string().trim().min(1).max(120),
   resumeText: z.string().trim().min(1).max(24000),
+  resumeHtml: z.string().max(100000).optional(),
 });
 
 export type Profile = z.infer<typeof profileSchema> & { ownerId: string };
 
 export function createProfileRoutes(profiles: Collection<Profile>) {
   const router = new Hono<TrackerEnv>();
-  router.use("*", requireAuth, bodyLimit({ maxSize: 64 * 1024 }));
+  router.use("*", requireAuth, bodyLimit({ maxSize: 256 * 1024 }));
   return router
     .get("/", async (c) => {
       const profile = await profiles.findOne({ ownerId: c.get("ownerId") });
       return c.json({
         profile: profile
-          ? { name: profile.name, resumeText: profile.resumeText }
+          ? { name: profile.name, resumeText: profile.resumeText, ...(profile.resumeHtml ? { resumeHtml: profile.resumeHtml } : {}) }
           : null,
       });
     })

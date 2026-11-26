@@ -47,6 +47,7 @@ export function ProfileGate({
     return (
       <Onboarding
         token={session.token}
+        initialName={session.name}
         complete={setProfile}
         signOut={signOut}
       />
