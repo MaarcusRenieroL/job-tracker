@@ -1,8 +1,12 @@
 import {
   assessmentStatuses,
   assessmentTypes,
+  interviewResults,
+  interviewTypes,
   priorities,
+  referralStatuses,
   stages,
+  workModels,
 } from "../../../types/application";
 
 export type Field = {
@@ -44,7 +48,7 @@ export const postingFields: Field[] = [
     name: "workModel",
     label: "Work model",
     type: "select",
-    choices: ["Remote", "Hybrid", "On-site"],
+    choices: workModels,
     allowClear: true,
   },
   {
@@ -199,7 +203,7 @@ export const referralFields: Field[] = [
     name: "status",
     label: "Outreach status",
     type: "select",
-    choices: ["Identified", "Contacted", "Responded", "Referred", "Declined"],
+    choices: referralStatuses,
   },
   { name: "followUp", label: "Follow-up date", type: "date" },
   {
@@ -217,14 +221,7 @@ export const interviewFields: Field[] = [
     name: "type",
     label: "Round type",
     type: "select",
-    choices: [
-      "Recruiter screening",
-      "Coding assessment",
-      "Technical round",
-      "System design",
-      "Hiring manager",
-      "HR discussion",
-    ],
+    choices: interviewTypes,
   },
   { name: "dateTime", label: "Date & time", type: "datetime-local" },
   { name: "interviewer", label: "Interviewer", placeholder: "Name & title" },
@@ -238,7 +235,7 @@ export const interviewFields: Field[] = [
     name: "result",
     label: "Result",
     type: "select",
-    choices: ["Scheduled", "Passed", "Rejected", "Pending", "Cancelled"],
+    choices: interviewResults,
     wide: true,
   },
   { name: "topics", label: "Topics covered", type: "textarea", wide: true },

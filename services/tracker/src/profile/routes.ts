@@ -1,17 +1,15 @@
+import {
+  profileInputSchema,
+  type Profile as SharedProfile,
+  type ResumeVersion,
+} from "@job-tracker/application-options";
 import { randomUUID } from "node:crypto";
 import { Hono } from "hono";
 import { bodyLimit } from "hono/body-limit";
 import type { Collection } from "mongodb";
-import { z } from "zod";
 import { requireAuth, type TrackerEnv } from "../auth/require-auth.js";
 
-const profileSchema = z.strictObject({
-  name: z.string().trim().min(1).max(120),
-  resumeText: z.string().trim().min(1).max(24000),
-  resumeHtml: z.string().max(100000).optional(),
-});
-type ResumeVersion = { id: string; resumeText: string; resumeHtml?: string; createdAt: string };
-export type Profile = z.infer<typeof profileSchema> & { ownerId: string; resumeVersions?: ResumeVersion[] };
+export type Profile = SharedProfile & { ownerId: string; resumeVersions?: ResumeVersion[] };
 
 export function createProfileRoutes(profiles: Collection<Profile>) {
   const router = new Hono<TrackerEnv>();
@@ -26,7 +24,7 @@ export function createProfileRoutes(profiles: Collection<Profile>) {
       } : null });
     })
     .put("/", async (c) => {
-      const input = profileSchema.safeParse(await c.req.json().catch(() => null));
+      const input = profileInputSchema.safeParse(await c.req.json().catch(() => null));
       if (!input.success) return c.json({ error: "Enter your name and resume details.", issues: input.error.issues }, 400);
       const ownerId = c.get("ownerId");
       const existing = await profiles.findOne({ ownerId });

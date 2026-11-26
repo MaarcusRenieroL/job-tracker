@@ -3,12 +3,15 @@ import type { Collection } from "mongodb";
 import { z } from "zod";
 import { importPosting, ImportError } from "../import-posting.js";
 import type { TrackerEnv } from "../../auth/require-auth.js";
-import { applicationSchema, updateSchema, type Application } from "../schema.js";
+import {
+  applicationSchema,
+  formattedApplicationFields,
+  updateSchema,
+  type Application,
+} from "../schema.js";
 import { createApplication, ownerFilter } from "../procedures.js";
 
 type ApplicationContext = Context<TrackerEnv>;
-
-const formattedFields = ["description", "notes", "resumeText", "coverLetter"] as const;
 
 export async function handleCreate(
   c: ApplicationContext,
@@ -62,7 +65,7 @@ export async function handleUpdate(
   const unset: Record<string, ""> = Object.fromEntries(
     clear.filter((key) => !(key in fields)).map((key) => [key, "" as const]),
   );
-  for (const key of formattedFields) {
+  for (const key of formattedApplicationFields) {
     const htmlKey = `${key}Html` as const;
     const textChanged = key in fields && fields[key] !== current[key];
     if ((textChanged || key in unset) && !(htmlKey in fields)) {

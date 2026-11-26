@@ -1,2 +1,6 @@
-export type ResumeVersion = { id: string; resumeText: string; resumeHtml?: string; createdAt: string };
-export type Profile = { name: string; resumeText: string; resumeHtml?: string; resumeVersions?: ResumeVersion[] };
+export type {
+  Profile,
+  ProfileInput,
+  ResumeVersion,
+} from "@job-tracker/application-options";
+export { profileInputSchema } from "@job-tracker/application-options";

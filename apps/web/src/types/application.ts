@@ -1,44 +1,47 @@
-import {
+export {
+  agendaEventKinds,
   assessmentStatuses,
   assessmentTypes,
+  clearableApplicationKeys,
+  interviewResults,
+  interviewTypes,
   priorities,
+  referralStatuses,
   stages,
+  workModels,
+  type AgendaEvent,
+  type AgendaEventKind,
+  type Assessment,
+  type AssessmentStatus,
+  type AssessmentType,
+  type ClearableApplicationKey,
+  type FitEvidenceItem,
+  type FitExplanation,
+  type InterviewPrep,
+  type InterviewPrepQuestion,
+  type InterviewPrepTopic,
+  type InterviewResult,
+  type InterviewRound,
+  type InterviewType,
+  type Match,
+  type OfferData,
+  type OfferRow,
+  type PostingSuggestions,
+  type Priority,
+  type ReferralContact,
+  type ReferralStatus,
+  type Stage,
+  type WorkModel,
+} from "@job-tracker/application-options";
+import type {
+  OfferData,
+  Priority,
+  Stage,
+  StageTransition,
+  WorkModel,
 } from "@job-tracker/application-options";
 
-export { stages, priorities, assessmentTypes, assessmentStatuses };
-
-export type Stage = (typeof stages)[number];
-
-export type Priority = (typeof priorities)[number];
-
-export type AssessmentType = (typeof assessmentTypes)[number];
-
-export type AssessmentStatus = (typeof assessmentStatuses)[number];
-
 export type Entry = Record<string, string | undefined> & { id: string };
-
-export type Assessment = {
-  id: string;
-  title: string;
-  type: AssessmentType;
-  status: AssessmentStatus;
-  deadline?: string;
-  submittedAt?: string;
-  repoUrl?: string;
-  outcome?: string;
-  notes?: string;
-  notesHtml?: string;
-};
-
-export type OfferData = {
-  base?: number;
-  bonus?: number;
-  equity?: number;
-  currency: string;
-  deadline?: string;
-  notes?: string;
-  notesHtml?: string;
-};
 
 export type Application = {
   _id: string;
@@ -52,7 +55,7 @@ export type Application = {
   assessments?: Entry[];
   jobUrl?: string;
   location?: string;
-  workModel?: string;
+  workModel?: WorkModel | string;
   salaryRange?: string;
   description?: string;
   descriptionHtml?: string;
@@ -75,76 +78,5 @@ export type Application = {
   interviews?: Entry[];
   updatedAt?: string;
   createdAt?: string;
-  history: { from?: Stage; to: Stage; at: string }[];
-};
-
-export type Match = {
-  score: number | null;
-  keywords: string[];
-  location: { target: string; evidence: string | null } | null;
-  seniority: { target: string; evidence: string | null } | null;
-  matches: { skill: string; level: string; evidence: string | null }[];
-  preparation: string[];
-};
-
-export type FitEvidenceItem = {
-  point: string;
-  evidence: string;
-};
-
-export type FitExplanation = {
-  summary: string;
-  strengths: FitEvidenceItem[];
-  gaps: FitEvidenceItem[];
-  preparation: FitEvidenceItem[];
-};
-
-export type PostingSuggestions = {
-  seniority: string;
-  skills: string[];
-  responsibilities: string[];
-};
-
-export type InterviewPrepTopic = {
-  topic: string;
-  focus: string;
-  source: string;
-};
-
-export type InterviewPrepQuestion = {
-  question: string;
-  category: string;
-  whyAsked: string;
-};
-
-export type InterviewPrep = {
-  topics: InterviewPrepTopic[];
-  questions: InterviewPrepQuestion[];
-};
-
-export type AgendaEventKind =
-  | "application-deadline"
-  | "follow-up"
-  | "interview"
-  | "assessment"
-  | "referral-follow-up"
-  | "offer-deadline";
-
-export type AgendaEvent = {
-  id: string;
-  applicationId: string;
-  company: string;
-  role: string;
-  kind: AgendaEventKind;
-  title: string;
-  date: string;
-  dateTime?: string;
-};
-
-export type OfferRow = {
-  _id: string;
-  company: string;
-  role: string;
-  stage: Stage;
-  offer: OfferData;
+  history: StageTransition<string>[];
 };

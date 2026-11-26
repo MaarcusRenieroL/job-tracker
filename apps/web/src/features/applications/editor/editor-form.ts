@@ -1,4 +1,8 @@
-import type { Application, Entry } from "../../../types/application";
+import {
+  clearableApplicationKeys,
+  type Application,
+  type Entry,
+} from "../../../types/application";
 import { applicationFields, postingFields } from "./editor-fields";
 
 export function editorFieldValues(key: string, value: string, html?: string) {
@@ -6,29 +10,6 @@ export function editorFieldValues(key: string, value: string, html?: string) {
     ? { [key]: value }
     : { [key]: value, [`${key}Html`]: html };
 }
-
-const clearableKeys = [
-  "seniority",
-  "jobUrl",
-  "location",
-  "workModel",
-  "salaryRange",
-  "description",
-  "descriptionHtml",
-  "source",
-  "deadline",
-  "priority",
-  "notes",
-  "notesHtml",
-  "appliedAt",
-  "resumeVersion",
-  "resumeText",
-  "resumeTextHtml",
-  "coverLetter",
-  "coverLetterHtml",
-  "followUp",
-  "rejectionReason",
-] as const;
 
 export function initialFields(job?: Application) {
   const values: Record<string, string> = { stage: job?.stage ?? "Saved" };
@@ -120,7 +101,9 @@ export function applicationPayload({
     ...(job
       ? {
           version: job.version,
-          clear: clearableKeys.filter((key) => !fields[key]?.trim()),
+          clear: clearableApplicationKeys.filter(
+            (key) => !fields[key]?.trim(),
+          ),
         }
       : {}),
     skills: parsedSkills,
