@@ -31,7 +31,6 @@ import {
   ExternalLink,
   FileCheck2,
   History,
-  Sparkles,
   Trash2,
   Users,
 } from "lucide-react";
@@ -44,63 +43,17 @@ import type {
   Priority,
   Stage,
 } from "../../types/application";
-import { EntryCollection, FieldGrid } from "./editor-controls";
+import { FieldGrid } from "./editor-controls";
 import {
   applicationFields,
   postingFields,
-  referralFields,
 } from "./editor-fields";
 import { EditorMatch } from "./editor-match";
 import { EditorAssessments } from "./editor-assessments";
 import { EditorOffer } from "./editor-offer";
+import { EditorReferrals } from "./editor-referrals";
+import { applicationPayload, initialFields, localDateTime } from "./editor-form";
 
-const clearableKeys = [
-  "jobUrl",
-  "location",
-  "workModel",
-  "salaryRange",
-  "description",
-  "source",
-  "deadline",
-  "priority",
-  "notes",
-  "appliedAt",
-  "resumeVersion",
-  "resumeText",
-  "coverLetter",
-  "followUp",
-  "rejectionReason",
-] as const;
-
-function initialFields(job?: Application) {
-  const values: Record<string, string> = { stage: job?.stage ?? "Saved" };
-  for (const field of [...postingFields, ...applicationFields]) {
-    if (
-      field.name === "skills" ||
-      field.name === "tags" ||
-      field.name === "stage"
-    )
-      continue;
-    const value = job?.[field.name as keyof Application];
-    values[field.name] = typeof value === "string" ? value : "";
-  }
-  values.skills = job?.skills?.join(", ") ?? "";
-  values.tags = job?.tags?.join(", ") ?? "";
-  return values;
-}
-
-function localDateTime(value: string) {
-  const date = new Date(value);
-  return new Date(date.getTime() - date.getTimezoneOffset() * 60000)
-    .toISOString()
-    .slice(0, 16);
-}
-
-function clean(values: Record<string, string | undefined>) {
-  return Object.fromEntries(
-    Object.entries(values).filter(([, value]) => value?.trim()),
-  );
-}
 
 export type EditorTab =
   "overview" | "assessments" | "referrals" | "offer" | "match" | "history";
@@ -178,65 +131,7 @@ export function EditorSheet({
   function submit(event: FormEvent) {
     event.preventDefault();
     void run(async () => {
-      const { skills, tags, ...fields } = values;
-      const parsedTags = tags
-        .split(",")
-        .map((t) => t.trim())
-        .filter(Boolean);
-      const parsedSkills = skills
-        .split(",")
-        .map((skill) => skill.trim())
-        .filter(Boolean);
-
-      const serializedInterviews = interviews.map((entry, idx) => {
-        const rawDate = entry.dateTime?.trim();
-        if (!rawDate) {
-          throw new Error(
-            `Please select a date and time for interview round ${idx + 1}.`,
-          );
-        }
-        const parsedDate = new Date(rawDate);
-        if (Number.isNaN(parsedDate.getTime())) {
-          throw new Error(
-            `Invalid date and time for interview round ${idx + 1}.`,
-          );
-        }
-        return {
-          ...clean(entry),
-          dateTime: parsedDate.toISOString(),
-        };
-      });
-
-      const body = {
-        ...clean(fields),
-        ...(job
-          ? {
-              version: job.version,
-              clear: clearableKeys.filter((key) => !fields[key]?.trim()),
-            }
-          : {}),
-        skills: parsedSkills,
-        tags: parsedTags,
-        assessments: assessments.map(clean),
-        referrals: referrals.map(clean),
-        interviews: serializedInterviews,
-        ...(compensation.currency?.trim()
-          ? {
-              offer: {
-                currency: compensation.currency.trim().toUpperCase(),
-                ...Object.fromEntries(
-                  ["base", "bonus", "equity"]
-                    .filter((key) => compensation[key])
-                    .map((key) => [key, Number(compensation[key])]),
-                ),
-                deadline: compensation.deadline?.trim() || undefined,
-                notes: compensation.notes?.trim() || undefined,
-              },
-            }
-          : job?.offer
-            ? { clearOffer: true }
-            : {}),
-      };
+      const body = applicationPayload({ job, values, assessments, referrals, interviews, compensation });
       await save(body);
     });
   }
@@ -529,73 +424,7 @@ export function EditorSheet({
 
             <EditorAssessments assessments={assessments} setAssessments={setAssessments} interviews={interviews} setInterviews={setInterviews} />
 
-            <TabsContent id="referrals" className="flex flex-col gap-5">
-              <EntryCollection
-                title="Referral Contacts"
-                emptyTitle="No referral contacts added"
-                emptyDescription="Save employees or hiring contacts, track follow-ups, and draft outreach with your local Ollama model."
-                addLabel="Add referral"
-                entries={referrals}
-                setEntries={setReferrals}
-                fields={referralFields}
-                idPrefix="referral"
-                defaults={{ status: "Identified" }}
-                extra={
-                  job
-                    ? (entry) => {
-                        const isSaved = job.referrals?.some(
-                          (saved) => saved.id === entry.id,
-                        );
-                        return (
-                          <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border/70 pt-3">
-                            <span className="text-xs text-muted-foreground">
-                              {isSaved
-                                ? "Generate a tailored referral message via local Ollama."
-                                : "Save the application first to enable AI referral drafting."}
-                            </span>
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="xs"
-                              isDisabled={pending || !isSaved}
-                              onPress={() =>
-                                void run(async () => {
-                                  const result = await api<{ draft: string }>(
-                                    `/applications/${job._id}/referrals/${entry.id}/draft`,
-                                    token,
-                                    "POST",
-                                  );
-                                  setDraft(result.draft);
-                                })
-                              }
-                            >
-                              <Sparkles className="size-3" /> Draft with AI
-                            </Button>
-                          </div>
-                        );
-                      }
-                    : undefined
-                }
-              />
-
-              {draft && (
-                <CardFrame>
-                  <CardFrameHeader>
-                    <CardFrameTitle>
-                      AI Referral Draft (Review before sending)
-                    </CardFrameTitle>
-                  </CardFrameHeader>
-                  <CardFramePanel className="p-4">
-                    <Textarea
-                      rows={6}
-                      value={draft}
-                      onChange={(e) => setDraft(e.target.value)}
-                      aria-label="Referral message draft"
-                    />
-                  </CardFramePanel>
-                </CardFrame>
-              )}
-            </TabsContent>
+            <EditorReferrals job={job} referrals={referrals} setReferrals={setReferrals} draft={draft} setDraft={setDraft} pending={pending} run={run} token={token} />
 
             <EditorOffer compensation={compensation} setCompensation={setCompensation} />
 
