@@ -65,6 +65,8 @@ services:
       MONGO_URI: mongodb://mongo:27017
       OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: ${OTEL_EXPORTER_OTLP_TRACES_ENDPOINT:-}
       AUTH_URL: http://auth:3001
+      OLLAMA_BASE_URL: http://ollama:11434
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-qwen2.5:1.5b}
     volumes:
       - signing-keys:/app/.local:ro
     depends_on:
@@ -101,6 +103,36 @@ services:
     ports:
       - "127.0.0.1:16686:16686"
 
+  ollama:
+    image: ollama/ollama
+    profiles: ["ai"]
+    environment:
+      OLLAMA_NO_CLOUD: "1"
+    volumes:
+      - ollama-models:/root/.ollama
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  ollama-init:
+    image: ollama/ollama
+    profiles: ["ai"]
+    environment:
+      OLLAMA_HOST: http://ollama:11434
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-qwen2.5:1.5b}
+    depends_on:
+      ollama:
+        condition: service_healthy
+    entrypoint: ["/bin/sh", "-ec"]
+    command:
+      - |
+        if ! ollama show "$$OLLAMA_MODEL" >/dev/null 2>&1; then
+          ollama pull "$$OLLAMA_MODEL"
+        fi
+
 volumes:
   mongo-data:
   signing-keys:
+  ollama-models:

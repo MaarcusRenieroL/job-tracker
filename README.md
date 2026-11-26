@@ -65,14 +65,23 @@ Tracker checks Auth's readiness with a bounded HTTP request. The resulting trace
 
 Resume coverage awards one point for a strong match, half a point for a partial match, and zero for a missing skill. The score is the weighted share of required skills. Location and seniority signals look for explicit resume text and stay outside the score.
 
-To enable AI drafts, run Ollama locally, pull an instruction model, and start Tracker with the model name:
+To enable AI drafts with Docker, start the optional AI profile:
+
+```sh
+docker compose --profile ai up --build -d
+docker compose --profile ai logs -f ollama-init
+```
+
+On the first run, Docker pulls Ollama and downloads `qwen2.5:1.5b`. The `ollama-models` volume keeps the model for later runs. Wait for `ollama-init` to exit successfully, then save an application and a referral contact and select **Draft with AI**. Review the editable result before sending. Set `OLLAMA_MODEL` before starting Compose to change the model. The core app also runs with the standard startup command.
+
+When running Tracker directly on your machine, start Ollama locally, pull a model, and pass its name to Tracker:
 
 ```sh
 ollama pull qwen2.5:0.5b
 OLLAMA_MODEL=qwen2.5:0.5b pnpm --filter @job-tracker/tracker dev
 ```
 
-Save the application and a referral contact before selecting **Draft message with AI**. Tracker sends the draft request to loopback on port 11434. The result is editable and must be reviewed before sending. The rest of the app works without Ollama.
+Tracker defaults to the locally running Ollama server on port 11434. Use `OLLAMA_BASE_URL` to select a different Ollama server.
 
 ## AI assistance
 

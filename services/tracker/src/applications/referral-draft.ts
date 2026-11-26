@@ -7,9 +7,12 @@ export async function draftReferral(
   referral: Referral,
 ) {
   const model = process.env.OLLAMA_MODEL?.trim();
+  const baseURL =
+    process.env.OLLAMA_BASE_URL?.trim() || "http://127.0.0.1:11434";
+
   if (!model) return null;
 
-  const response = await fetch("http://127.0.0.1:11434/api/chat", {
+  const response = await fetch(new URL("/api/chat", baseURL), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     signal: AbortSignal.timeout(30_000),
