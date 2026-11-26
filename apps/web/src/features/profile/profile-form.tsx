@@ -1,4 +1,4 @@
-import { useState, type DragEvent } from "react";
+import { useEffect, useState, type DragEvent } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FileText, UploadCloud } from "lucide-react";
 import { useForm, useWatch } from "react-hook-form";
@@ -35,6 +35,8 @@ export function ProfileForm({
   complete,
   submitLabel,
   secondaryAction,
+  onPdfFile,
+  onDraftChange,
 }: {
   token: string;
   initialName?: string;
@@ -42,6 +44,8 @@ export function ProfileForm({
   complete: (profile: Profile) => void;
   submitLabel: string;
   secondaryAction?: { label: string; run: () => void };
+  onPdfFile?: (file: File | null) => void;
+  onDraftChange?: (draft: { name: string; resumeText: string }) => void;
 }) {
   const [error, setError] = useState("");
   const [uploading, setUploading] = useState(false);
@@ -65,14 +69,21 @@ export function ProfileForm({
       resumeHtml: initialProfile?.resumeHtml ?? "",
     },
   });
+  const name = useWatch({ control, name: "name" }) ?? "";
   const resumeText = useWatch({ control, name: "resumeText" }) ?? "";
   const resumeHtml = useWatch({ control, name: "resumeHtml" }) ?? "";
+
+  useEffect(() => {
+    onDraftChange?.({ name, resumeText });
+  }, [name, resumeText, onDraftChange]);
 
   async function upload(file?: File) {
     if (!file) return;
     setUploading(true);
     setError("");
     try {
+      const isPdf = file.name.toLowerCase().endsWith(".pdf");
+      onPdfFile?.(isPdf ? file : null);
       const text = (await readResume(file)).trim();
       if (!text) {
         throw new Error(
