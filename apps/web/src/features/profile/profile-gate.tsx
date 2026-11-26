@@ -4,18 +4,23 @@ import { WorkspaceLoading } from "@/components/system/workspace-loading";
 import { api } from "../../lib/api";
 import type { Session } from "../auth/session";
 import { Workspace } from "../workspace/workspace";
-import { Onboarding } from "./onboarding";
+import { Onboarding } from "../onboarding/onboarding";
+import type { Navigate, Page } from "../../navigation";
+import { ProfileSettings } from "./profile-settings";
 import type { Profile } from "./profile";
 
 export function ProfileGate({
   session,
   signOut,
+  page,
+  navigate,
 }: {
   session: Session;
   signOut: () => void;
+  page: Page;
+  navigate: Navigate;
 }) {
   const [profile, setProfile] = useState<Profile | null | undefined>();
-  const [editing, setEditing] = useState(false);
   const [error, setError] = useState("");
   const [retry, setRetry] = useState(0);
   useEffect(() => {
@@ -32,6 +37,21 @@ export function ProfileGate({
       active = false;
     };
   }, [session.token, retry]);
+  const destination = profile === null
+    ? "/onboarding"
+    : page === "/settings/profile" ? page : "/";
+
+  useEffect(() => {
+    if (profile !== undefined && destination !== page) {
+      navigate(destination, { replace: true });
+    }
+  }, [destination, navigate, page, profile]);
+
+  function saveProfile(updated: Profile) {
+    setProfile(updated);
+    navigate("/", { replace: true });
+  }
+
   if (error)
     return (
       <SystemScreen
@@ -49,10 +69,27 @@ export function ProfileGate({
       <Onboarding
         token={session.token}
         initialName={session.name}
-        complete={setProfile}
+        complete={saveProfile}
         signOut={signOut}
       />
     );
-  if (editing) return <Onboarding token={session.token} initialProfile={profile} complete={(updated) => { setProfile(updated); setEditing(false); }} cancel={() => setEditing(false)} signOut={signOut} />;
-  return <Workspace session={session} signOut={signOut} profile={profile} onEditProfile={() => setEditing(true)} />;
+  if (page === "/settings/profile") {
+    return (
+      <ProfileSettings
+        token={session.token}
+        profile={profile}
+        complete={saveProfile}
+        back={() => navigate("/", { replace: true })}
+      />
+    );
+  }
+
+  return (
+    <Workspace
+      session={session}
+      signOut={signOut}
+      profile={profile}
+      onEditProfile={() => navigate("/settings/profile")}
+    />
+  );
 }

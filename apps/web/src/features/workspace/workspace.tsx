@@ -1,4 +1,4 @@
-import type { Profile } from "../onboarding/profile";
+import type { Profile } from "../profile/profile";
 import { Button } from "@/components/ui/button";
 import { CardFrame, CardFramePanel } from "@/components/ui/card-frame";
 import {

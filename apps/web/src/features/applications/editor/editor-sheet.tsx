@@ -1,4 +1,4 @@
-import type { Profile } from "../../onboarding/profile";
+import type { Profile } from "../../profile/profile";
 import { EditorHistory } from "./editor-history";
 import {
   CompanyAvatar,
