@@ -69,18 +69,23 @@ export function EditorSheet({
     handleSubmit,
     values,
     setValues,
+    onBlurValues,
     valueErrors,
     assessments,
     setAssessments,
+    onBlurAssessments,
     assessmentErrors,
     referrals,
     setReferrals,
+    onBlurReferrals,
     referralErrors,
     interviews,
     setInterviews,
+    onBlurInterviews,
     interviewErrors,
     compensation,
     setCompensation,
+    onBlurCompensation,
     compensationErrors,
   } = useEditorForm(job, profile);
   const [match, setMatch] = useState<Match>();
@@ -256,6 +261,7 @@ export function EditorSheet({
               values={values}
               setValues={setValues}
               errors={valueErrors}
+              onBlur={onBlurValues}
               pending={pending}
               run={run}
               token={token}
@@ -267,9 +273,11 @@ export function EditorSheet({
               assessments={assessments}
               setAssessments={setAssessments}
               assessmentErrors={assessmentErrors}
+              onBlurAssessments={onBlurAssessments}
               interviews={interviews}
               setInterviews={setInterviews}
               interviewErrors={interviewErrors}
+              onBlurInterviews={onBlurInterviews}
               prep={prep}
               setPrep={setPrep}
               pending={pending}
@@ -282,6 +290,7 @@ export function EditorSheet({
               referrals={referrals}
               setReferrals={setReferrals}
               referralErrors={referralErrors}
+              onBlurReferrals={onBlurReferrals}
               draft={draft}
               setDraft={setDraft}
               pending={pending}
@@ -293,6 +302,7 @@ export function EditorSheet({
               compensation={compensation}
               setCompensation={setCompensation}
               errors={compensationErrors}
+              onBlur={onBlurCompensation}
             />
 
             {job && (

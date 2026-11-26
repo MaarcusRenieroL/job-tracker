@@ -48,28 +48,45 @@ export function SignIn({ onSignIn }: { onSignIn: (session: Session) => void }) {
   const [error, setError] = useState("");
 
   const schema = z.object({
-    name: register ? z.string().trim().min(1, "Enter your name.").max(120) : z.string(),
-    email: z.string().trim().toLowerCase().pipe(z.email("Enter a valid email address.")),
+    name: register
+      ? z.string().trim().min(1, "Enter your name.").max(120)
+      : z.string(),
+    email: z
+      .string()
+      .trim()
+      .toLowerCase()
+      .pipe(z.email("Enter a valid email address.")),
     password: z.string().min(12, "Use at least 12 characters.").max(128),
   });
   const form = useForm<z.infer<typeof schema>>({
     resolver: zodResolver(schema),
-    mode: "onChange",
+    mode: "onTouched",
     defaultValues: { name: "", email: "", password: "" },
   });
   const password = useWatch({ control: form.control, name: "password" }) ?? "";
   const passwordChecks = [
     { label: "12 or more characters", met: password.length >= 12 },
-    { label: "Upper and lowercase letters", met: /[a-z]/.test(password) && /[A-Z]/.test(password) },
+    {
+      label: "Upper and lowercase letters",
+      met: /[a-z]/.test(password) && /[A-Z]/.test(password),
+    },
     { label: "A number or symbol", met: /[^a-zA-Z]/.test(password) },
   ];
   const submit = form.handleSubmit(async ({ name, email, password }) => {
     setPending(true);
     setError("");
     try {
-      if (register) await api("/auth/register", undefined, "POST", { name, email, password });
+      if (register)
+        await api("/auth/register", undefined, "POST", {
+          name,
+          email,
+          password,
+        });
       const { accessToken } = await api<{ accessToken: string }>(
-        "/auth/login", undefined, "POST", { email, password },
+        "/auth/login",
+        undefined,
+        "POST",
+        { email, password },
       );
       onSignIn({ token: accessToken, email, ...(register ? { name } : {}) });
     } catch (failure) {
@@ -245,12 +262,26 @@ export function SignIn({ onSignIn }: { onSignIn: (session: Session) => void }) {
               >
                 {register && (
                   <div className="flex flex-col gap-1.5">
-                    <Label htmlFor="auth-name" className="text-xs">Full name</Label>
+                    <Label htmlFor="auth-name" className="text-xs">
+                      Full name
+                    </Label>
                     <InputGroup className="h-9 bg-background">
-                      <InputGroupAddon><UserRound className="size-4" /></InputGroupAddon>
-                      <InputGroupInput id="auth-name" autoComplete="name" placeholder="Your name" aria-invalid={!!form.formState.errors.name} {...form.register("name")} />
+                      <InputGroupAddon>
+                        <UserRound className="size-4" />
+                      </InputGroupAddon>
+                      <InputGroupInput
+                        id="auth-name"
+                        autoComplete="name"
+                        placeholder="Your name"
+                        aria-invalid={!!form.formState.errors.name}
+                        {...form.register("name")}
+                      />
                     </InputGroup>
-                    {form.formState.errors.name && <p role="alert" className="text-xs text-destructive">{form.formState.errors.name.message}</p>}
+                    {form.formState.errors.name && (
+                      <p role="alert" className="text-xs text-destructive">
+                        {form.formState.errors.name.message}
+                      </p>
+                    )}
                   </div>
                 )}
                 <div className="flex flex-col gap-1.5">

@@ -50,6 +50,7 @@ export function FieldGrid({
   idPrefix,
   resumeVersions,
   errors,
+  onBlur,
 }: {
   fields: Field[];
   values: Record<string, string | undefined>;
@@ -57,6 +58,7 @@ export function FieldGrid({
   idPrefix: string;
   resumeVersions?: ResumeVersion[];
   errors?: Record<string, string | undefined>;
+  onBlur?: () => void;
 }) {
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -219,6 +221,7 @@ export function FieldGrid({
                 value={value}
                 placeholder={field.placeholder}
                 aria-invalid={Boolean(fieldError)}
+                onBlur={onBlur}
                 onChange={(e) => change(field.name, e.target.value)}
                 className="min-h-20 bg-background"
               />
@@ -232,6 +235,7 @@ export function FieldGrid({
                 aria-invalid={Boolean(fieldError)}
                 min={field.type === "number" ? 0 : undefined}
                 step={field.type === "number" ? "any" : undefined}
+                onBlur={onBlur}
                 onChange={(e) => change(field.name, e.target.value)}
                 className="bg-background"
               />
@@ -260,6 +264,7 @@ export function EntryCollection({
   defaults,
   extra,
   errors,
+  onBlur,
 }: {
   title: string;
   emptyTitle: string;
@@ -272,6 +277,7 @@ export function EntryCollection({
   defaults: Record<string, string>;
   extra?: (entry: Entry) => React.ReactNode;
   errors?: Array<Record<string, string | undefined>>;
+  onBlur?: () => void;
 }) {
   return (
     <CardFrame>
@@ -345,6 +351,7 @@ export function EntryCollection({
                     fields={fields}
                     values={entry}
                     errors={entryErrors}
+                    onBlur={onBlur}
                     idPrefix={`${idPrefix}-${entry.id}`}
                     change={(key, value, html) =>
                       setEntries(

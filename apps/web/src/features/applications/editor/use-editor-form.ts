@@ -188,7 +188,7 @@ export function useEditorForm(job: Application | undefined, profile: Profile) {
   }));
   const form = useForm<EditorFormValues>({
     resolver: zodResolver(editorSchema),
-    mode: "onChange",
+    mode: "onTouched",
     reValidateMode: "onChange",
     defaultValues,
   });
@@ -205,30 +205,35 @@ export function useEditorForm(job: Application | undefined, profile: Profile) {
     handleSubmit: form.handleSubmit,
     values: values.value,
     setValues: updateField(() => form.getValues("values"), values.onChange),
+    onBlurValues: values.onBlur,
     valueErrors: extractRecordErrors(errors.values),
     assessments: assessments.value,
     setAssessments: updateField(
       () => form.getValues("assessments"),
       assessments.onChange,
     ),
+    onBlurAssessments: assessments.onBlur,
     assessmentErrors: extractArrayErrors(errors.assessments),
     referrals: referrals.value,
     setReferrals: updateField(
       () => form.getValues("referrals"),
       referrals.onChange,
     ),
+    onBlurReferrals: referrals.onBlur,
     referralErrors: extractArrayErrors(errors.referrals),
     interviews: interviews.value,
     setInterviews: updateField(
       () => form.getValues("interviews"),
       interviews.onChange,
     ),
+    onBlurInterviews: interviews.onBlur,
     interviewErrors: extractArrayErrors(errors.interviews),
     compensation: compensation.value,
     setCompensation: updateField(
       () => form.getValues("compensation"),
       compensation.onChange,
     ),
+    onBlurCompensation: compensation.onBlur,
     compensationErrors: extractRecordErrors(errors.compensation),
   };
 }

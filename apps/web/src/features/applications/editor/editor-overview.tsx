@@ -23,6 +23,7 @@ export function EditorOverview({
   values,
   setValues,
   errors,
+  onBlur,
   pending,
   run,
   token,
@@ -32,6 +33,7 @@ export function EditorOverview({
   values: Record<string, string>;
   setValues: Dispatch<SetStateAction<Record<string, string>>>;
   errors?: Record<string, string>;
+  onBlur?: () => void;
   pending: boolean;
   run: (action: () => Promise<void>) => Promise<void>;
   token: string;
@@ -72,6 +74,7 @@ export function EditorOverview({
             fields={detailPostingFields}
             values={values}
             errors={errors}
+            onBlur={onBlur}
             change={change}
             idPrefix="posting"
           />
@@ -87,6 +90,7 @@ export function EditorOverview({
             fields={applicationFields}
             values={values}
             errors={errors}
+            onBlur={onBlur}
             change={change}
             idPrefix="application"
             resumeVersions={resumeVersions}

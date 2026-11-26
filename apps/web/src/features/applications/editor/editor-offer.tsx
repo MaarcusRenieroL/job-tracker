@@ -10,10 +10,12 @@ export function EditorOffer({
   compensation,
   setCompensation,
   errors,
+  onBlur,
 }: {
   compensation: Record<string, string>;
   setCompensation: Dispatch<SetStateAction<Record<string, string>>>;
   errors?: Record<string, string>;
+  onBlur?: () => void;
 }) {
   const liveOfferTotal = (Number(compensation.base) || 0) + (Number(compensation.bonus) || 0) + (Number(compensation.equity) || 0);
   return (
@@ -51,6 +53,7 @@ export function EditorOffer({
                     fields={offerFields}
                     values={compensation}
                     errors={errors}
+                    onBlur={onBlur}
                     change={(key, value, html) =>
                       setCompensation((previous) => ({
                         ...previous,

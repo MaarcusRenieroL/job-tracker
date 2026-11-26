@@ -45,7 +45,7 @@ export function UrlImportCard({
     formState: { errors },
   } = useForm<ImportUrlForm>({
     resolver: zodResolver(importUrlSchema),
-    mode: "onChange",
+    mode: "onTouched",
     defaultValues: { url: "" },
   });
 

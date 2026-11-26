@@ -63,7 +63,7 @@ export function ProfileForm({
     formState: { errors, isSubmitting },
   } = useForm<Profile>({
     resolver: zodResolver(schema),
-    mode: "onChange",
+    mode: "onTouched",
     defaultValues: {
       name: initialProfile?.name ?? initialName ?? "",
       resumeText: initialProfile?.resumeText ?? "",

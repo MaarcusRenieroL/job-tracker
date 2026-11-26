@@ -47,9 +47,11 @@ export function EditorAssessments({
   assessments,
   setAssessments,
   assessmentErrors,
+  onBlurAssessments,
   interviews,
   setInterviews,
   interviewErrors,
+  onBlurInterviews,
   prep,
   setPrep,
   pending,
@@ -60,9 +62,11 @@ export function EditorAssessments({
   assessments: Entry[];
   setAssessments: Dispatch<SetStateAction<Entry[]>>;
   assessmentErrors?: Array<Record<string, string>>;
+  onBlurAssessments?: () => void;
   interviews: Entry[];
   setInterviews: Dispatch<SetStateAction<Entry[]>>;
   interviewErrors?: Array<Record<string, string>>;
+  onBlurInterviews?: () => void;
   prep?: InterviewPrep;
   setPrep: (prep: InterviewPrep) => void;
   pending: boolean;
@@ -296,6 +300,7 @@ export function EditorAssessments({
         entries={assessments}
         setEntries={setAssessments}
         errors={assessmentErrors}
+        onBlur={onBlurAssessments}
         fields={assessmentFields}
         idPrefix="assessment"
         defaults={{
@@ -313,6 +318,7 @@ export function EditorAssessments({
         entries={interviews}
         setEntries={setInterviews}
         errors={interviewErrors}
+        onBlur={onBlurInterviews}
         fields={interviewFields}
         idPrefix="interview"
         defaults={{

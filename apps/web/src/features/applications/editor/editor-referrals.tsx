@@ -20,6 +20,7 @@ export function EditorReferrals({
   referrals,
   setReferrals,
   referralErrors,
+  onBlurReferrals,
   draft,
   setDraft,
   pending,
@@ -30,6 +31,7 @@ export function EditorReferrals({
   referrals: Entry[];
   setReferrals: Dispatch<SetStateAction<Entry[]>>;
   referralErrors?: Array<Record<string, string>>;
+  onBlurReferrals?: () => void;
   draft: string;
   setDraft: Dispatch<SetStateAction<string>>;
   pending: boolean;
@@ -70,6 +72,7 @@ export function EditorReferrals({
         entries={referrals}
         setEntries={setReferrals}
         errors={referralErrors}
+        onBlur={onBlurReferrals}
         fields={referralFields}
         idPrefix="referral"
         defaults={{ status: "Identified" }}
