@@ -1,3 +1,6 @@
+import { useState } from "react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 import { AgendaKindBadge } from "@/components/status-badges";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -36,6 +39,13 @@ export function AgendaDesk({
   setToDate: (value: string) => void;
   onSelectApplication: (applicationId: string) => void;
 }) {
+  const [query, setQuery] = useState("");
+  const [order, setOrder] = useState("earliest");
+  const [page, setPage] = useState(0);
+  const filtered = events.filter((event) => [event.title, event.company, event.role, event.kind].join(" ").toLowerCase().includes(query.trim().toLowerCase())).sort((a, b) => order === "earliest" ? (a.dateTime ?? a.date).localeCompare(b.dateTime ?? b.date) : (b.dateTime ?? b.date).localeCompare(a.dateTime ?? a.date));
+  const pageSize = 10;
+  const currentPage = Math.min(page, Math.max(0, Math.ceil(filtered.length / pageSize) - 1));
+  const visible = filtered.slice(currentPage * pageSize, (currentPage + 1) * pageSize);
   function applyPreset(daysAhead?: number) {
     const start = new Date().toISOString().slice(0, 10);
     setFromDate(start);
@@ -86,29 +96,10 @@ export function AgendaDesk({
                 />
               </InputGroup>
             </div>
-            <div className="flex items-center gap-1">
-              <Button
-                variant="outline"
-                size="xs"
-                onPress={() => applyPreset(14)}
-              >
-                Next 14d
-              </Button>
-              <Button
-                variant="outline"
-                size="xs"
-                onPress={() => applyPreset(30)}
-              >
-                Next 30d
-              </Button>
-              <Button
-                variant="ghost"
-                size="xs"
-                onPress={() => applyPreset(undefined)}
-              >
-                All upcoming
-              </Button>
-            </div>
+            <Select aria-label="Date range preset" placeholder="Date range" onSelectionChange={(key) => { if (key !== null) { applyPreset(key === "all" ? undefined : Number(key)); setPage(0); } }}>
+              <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
+              <SelectContent><SelectItem id="7">Next 7 days</SelectItem><SelectItem id="14">Next 14 days</SelectItem><SelectItem id="28">Next 28 days</SelectItem><SelectItem id="all">All upcoming</SelectItem></SelectContent>
+            </Select>
           </div>
           <span className="text-xs text-muted-foreground tabular-nums">
             {events.length} scheduled {events.length === 1 ? "event" : "events"}
@@ -116,7 +107,11 @@ export function AgendaDesk({
         </CardFramePanel>
       </CardFrame>
 
-      {events.length === 0 ? (
+      <div className="flex flex-wrap gap-2">
+        <Input aria-label="Search schedule" placeholder="Search company, role, or event…" value={query} onChange={(event) => { setQuery(event.target.value); setPage(0); }} className="w-full sm:w-72" />
+        <Select aria-label="Sort schedule" selectedKey={order} onSelectionChange={(key) => { if (key) setOrder(String(key)); }}><SelectTrigger className="w-40"><SelectValue /></SelectTrigger><SelectContent><SelectItem id="earliest">Earliest first</SelectItem><SelectItem id="latest">Latest first</SelectItem></SelectContent></Select>
+      </div>
+      {filtered.length === 0 ? (
         <CardFrame>
           <CardFramePanel>
             <Empty className="py-14">
@@ -125,7 +120,7 @@ export function AgendaDesk({
                   <CalendarClock />
                 </EmptyMedia>
                 <EmptyTitle>
-                  No upcoming deadlines in this date window
+                  No matching events in this date window
                 </EmptyTitle>
                 <EmptyDescription>
                   Scheduled interview rounds, active assessments, follow-ups,
@@ -141,11 +136,11 @@ export function AgendaDesk({
           <CardFrameHeader>
             <CardFrameTitle>Chronological Schedule</CardFrameTitle>
             <CardFrameDescription>
-              Sorted earliest to latest
+              {order === "earliest" ? "Sorted earliest to latest" : "Sorted latest to earliest"}
             </CardFrameDescription>
           </CardFrameHeader>
           <CardFramePanel className="divide-y divide-border/70">
-            {events.map((event) => {
+            {visible.map((event) => {
               const parsed = new Date(
                 event.dateTime ?? `${event.date}T00:00:00`,
               );
@@ -213,6 +208,7 @@ export function AgendaDesk({
               );
             })}
           </CardFramePanel>
+          <div className="flex items-center justify-between gap-3 border-t px-4 py-3 text-xs text-muted-foreground"><span>{filtered.length} matching events · Page {currentPage + 1} of {Math.max(1, Math.ceil(filtered.length / pageSize))}</span><div className="flex gap-2"><Button variant="outline" size="xs" isDisabled={currentPage === 0} onPress={() => setPage(currentPage - 1)}>Previous</Button><Button variant="outline" size="xs" isDisabled={(currentPage + 1) * pageSize >= filtered.length} onPress={() => setPage(currentPage + 1)}>Next</Button></div></div>
         </CardFrame>
       )}
     </div>
