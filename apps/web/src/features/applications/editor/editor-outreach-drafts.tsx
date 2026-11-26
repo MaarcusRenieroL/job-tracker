@@ -1,5 +1,8 @@
 import { useState } from "react";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Check, Copy, CornerDownLeft, Loader2, Sparkles } from "lucide-react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import {
   CardFrame,
@@ -15,6 +18,19 @@ import { api } from "@/lib/api";
 import type { Application } from "@/types/application";
 
 type OutreachKind = "cover-letter" | "follow-up";
+
+const followUpOptionsSchema = z.object({
+  recipient: z
+    .string()
+    .trim()
+    .max(160, "Recipient must be 160 characters or fewer."),
+  note: z
+    .string()
+    .trim()
+    .max(500, "Follow-up context must be 500 characters or fewer."),
+});
+
+type FollowUpOptionsForm = z.infer<typeof followUpOptionsSchema>;
 
 export function OutreachDraftsCard({
   job,
@@ -35,9 +51,39 @@ export function OutreachDraftsCard({
   const [draftingKind, setDraftingKind] = useState<OutreachKind | null>(null);
   const [outreachDraft, setOutreachDraft] = useState("");
   const [outreachDraftHtml, setOutreachDraftHtml] = useState("");
-  const [followUpRecipient, setFollowUpRecipient] = useState("");
-  const [followUpNote, setFollowUpNote] = useState("");
   const { copied, copyText } = useCopyFeedback();
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<FollowUpOptionsForm>({
+    resolver: zodResolver(followUpOptionsSchema),
+    defaultValues: { recipient: "", note: "" },
+  });
+
+  const submitFollowUp = handleSubmit(({ recipient, note }) =>
+    run(async () => {
+      if (!job) return;
+      setDraftingKind("follow-up");
+      try {
+        const result = await api<{ draft: string }>(
+          `/applications/${job._id}/follow-up/draft`,
+          token,
+          "POST",
+          {
+            ...(recipient ? { recipient } : {}),
+            ...(note ? { note } : {}),
+          },
+        );
+        setOutreachKind("follow-up");
+        setOutreachDraft(result.draft);
+        setOutreachDraftHtml("");
+      } finally {
+        setDraftingKind(null);
+      }
+    }),
+  );
 
   return (
     <CardFrame>
@@ -85,31 +131,7 @@ export function OutreachDraftsCard({
               variant="outline"
               size="xs"
               isDisabled={pending}
-              onPress={() =>
-                void run(async () => {
-                  setDraftingKind("follow-up");
-                  try {
-                    const result = await api<{ draft: string }>(
-                      `/applications/${job._id}/follow-up/draft`,
-                      token,
-                      "POST",
-                      {
-                        ...(followUpRecipient.trim()
-                          ? { recipient: followUpRecipient.trim() }
-                          : {}),
-                        ...(followUpNote.trim()
-                          ? { note: followUpNote.trim() }
-                          : {}),
-                      },
-                    );
-                    setOutreachKind("follow-up");
-                    setOutreachDraft(result.draft);
-                    setOutreachDraftHtml("");
-                  } finally {
-                    setDraftingKind(null);
-                  }
-                })
-              }
+              onPress={() => void submitFollowUp()}
             >
               {draftingKind === "follow-up" ? (
                 <>
@@ -142,11 +164,16 @@ export function OutreachDraftsCard({
                 </Label>
                 <Input
                   id="followup-recipient"
-                  value={followUpRecipient}
                   placeholder="e.g. Jordan Lee, Recruiting"
-                  onChange={(e) => setFollowUpRecipient(e.target.value)}
+                  aria-invalid={!!errors.recipient}
+                  {...register("recipient")}
                   className="bg-background"
                 />
+                {errors.recipient && (
+                  <p role="alert" className="text-xs text-destructive">
+                    {errors.recipient.message}
+                  </p>
+                )}
               </div>
               <div className="flex flex-col gap-1.5">
                 <Label
@@ -157,11 +184,16 @@ export function OutreachDraftsCard({
                 </Label>
                 <Input
                   id="followup-note"
-                  value={followUpNote}
                   placeholder="e.g. Checking in one week after technical round"
-                  onChange={(e) => setFollowUpNote(e.target.value)}
+                  aria-invalid={!!errors.note}
+                  {...register("note")}
                   className="bg-background"
                 />
+                {errors.note && (
+                  <p role="alert" className="text-xs text-destructive">
+                    {errors.note.message}
+                  </p>
+                )}
               </div>
             </div>
 

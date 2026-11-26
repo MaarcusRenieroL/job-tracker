@@ -101,12 +101,27 @@ export function EditorSheet({
   const submit = handleSubmit(
     (input) => run(() => save(applicationPayload({ job, ...input }))),
     (issues) => {
-      setActiveTab("overview");
-      const message = issues.values?.message;
+      const firstMessage = (node: unknown): string | undefined => {
+        if (!node || typeof node !== "object") return undefined;
+        if ("message" in node && typeof node.message === "string") {
+          return node.message;
+        }
+        for (const child of Object.values(node)) {
+          const found = firstMessage(child);
+          if (found) return found;
+        }
+        return undefined;
+      };
+
+      if (issues.values) setActiveTab("overview");
+      else if (issues.assessments || issues.interviews)
+        setActiveTab("assessments");
+      else if (issues.referrals) setActiveTab("referrals");
+      else if (issues.compensation) setActiveTab("offer");
+
       setError(
-        typeof message === "string"
-          ? message
-          : "Check the application details and try again.",
+        firstMessage(issues) ??
+          "Check the application details and try again.",
       );
     },
   );

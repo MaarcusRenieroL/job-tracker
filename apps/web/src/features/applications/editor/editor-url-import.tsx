@@ -1,4 +1,7 @@
 import { useState, type Dispatch, type SetStateAction } from "react";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import {
   CardFrame,
@@ -9,6 +12,18 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { api } from "@/lib/api";
+
+const importUrlSchema = z.object({
+  url: z
+    .string()
+    .trim()
+    .min(1, "Enter a job posting URL.")
+    .pipe(
+      z.url({ protocol: /^https?$/ }).max(2048, "URL is too long."),
+    ),
+});
+
+type ImportUrlForm = z.infer<typeof importUrlSchema>;
 
 export function UrlImportCard({
   setValues,
@@ -21,8 +36,37 @@ export function UrlImportCard({
   run: (action: () => Promise<void>) => Promise<void>;
   token: string;
 }) {
-  const [importUrl, setImportUrl] = useState("");
   const [importMessage, setImportMessage] = useState("");
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<ImportUrlForm>({
+    resolver: zodResolver(importUrlSchema),
+    defaultValues: { url: "" },
+  });
+
+  const submitImport = handleSubmit(({ url }) =>
+    run(async () => {
+      setImportMessage("");
+      const imported = await api<Record<string, string | undefined>>(
+        "/applications/import",
+        token,
+        "POST",
+        { url },
+      );
+      setValues((previous) => {
+        const next = { ...previous };
+        for (const [key, value] of Object.entries(imported)) {
+          if (value && !next[key]?.trim()) next[key] = value;
+        }
+        return next;
+      });
+      setImportMessage(
+        "Posting imported. Review or extract structured details below before saving.",
+      );
+    }),
+  );
 
   return (
     <CardFrame>
@@ -38,38 +82,23 @@ export function UrlImportCard({
             id="import-job-url"
             type="url"
             placeholder="https://company.com/jobs/…"
-            value={importUrl}
-            onChange={(event) => setImportUrl(event.target.value)}
+            aria-invalid={!!errors.url}
+            {...register("url")}
           />
           <Button
             type="button"
             variant="outline"
-            isDisabled={pending || !importUrl.trim()}
-            onPress={() =>
-              void run(async () => {
-                setImportMessage("");
-                const imported = await api<Record<string, string | undefined>>(
-                  "/applications/import",
-                  token,
-                  "POST",
-                  { url: importUrl.trim() },
-                );
-                setValues((previous) => {
-                  const next = { ...previous };
-                  for (const [key, value] of Object.entries(imported)) {
-                    if (value && !next[key]?.trim()) next[key] = value;
-                  }
-                  return next;
-                });
-                setImportMessage(
-                  "Posting imported. Review or extract structured details below before saving.",
-                );
-              })
-            }
+            isDisabled={pending}
+            onPress={() => void submitImport()}
           >
             Import
           </Button>
         </div>
+        {errors.url && (
+          <p role="alert" className="text-xs text-destructive">
+            {errors.url.message}
+          </p>
+        )}
         <p className="text-xs text-muted-foreground">
           Imports available details into empty fields. Review them before
           saving.
