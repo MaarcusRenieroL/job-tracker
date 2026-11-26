@@ -18,7 +18,7 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@/components/ui/empty";
-import { InputGroup, InputGroupInput } from "@/components/ui/input-group";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Label } from "@/components/ui/label";
 import { formatRelativeDays } from "@/lib/format";
 import { CalendarClock } from "lucide-react";
@@ -65,36 +65,19 @@ export function AgendaDesk({
           <div className="flex flex-wrap items-center gap-3">
             <div className="flex items-center gap-2">
               <Label
-                htmlFor="agenda-from"
                 className="text-xs text-muted-foreground"
               >
                 From
               </Label>
-              <InputGroup className="h-8 w-38 bg-background">
-                <InputGroupInput
-                  id="agenda-from"
-                  type="date"
-                  value={fromDate}
-                  onChange={(e) => setFromDate(e.target.value)}
-                />
-              </InputGroup>
+              <DatePicker label="From date" value={fromDate} onChange={setFromDate} />
             </div>
             <div className="flex items-center gap-2">
               <Label
-                htmlFor="agenda-to"
                 className="text-xs text-muted-foreground"
               >
                 To
               </Label>
-              <InputGroup className="h-8 w-38 bg-background">
-                <InputGroupInput
-                  id="agenda-to"
-                  type="date"
-                  min={fromDate || undefined}
-                  value={toDate}
-                  onChange={(e) => setToDate(e.target.value)}
-                />
-              </InputGroup>
+              <DatePicker label="To date" value={toDate} onChange={setToDate} />
             </div>
             <Select aria-label="Date range preset" placeholder="Date range" onSelectionChange={(key) => { if (key !== null) { applyPreset(key === "all" ? undefined : Number(key)); setPage(0); } }}>
               <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>

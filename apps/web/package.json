@@ -11,12 +11,13 @@
     "typecheck": "tsc -b"
   },
   "dependencies": {
-    "@job-tracker/application-options": "workspace:*",
     "@base-ui/react": "^1.9.0",
     "@editorcn/editor": "^0.5.0",
     "@floating-ui/dom": "^1.8.0",
     "@fontsource-variable/geist": "^5.3.0",
     "@hookform/resolvers": "^7.0.9",
+    "@internationalized/date": "^3.12.4",
+    "@job-tracker/application-options": "workspace:*",
     "@tailwindcss/vite": "^4.3.5",
     "@tanstack/react-table": "^9.3.1",
     "@tiptap/extension-character-count": "^3.35.0",
