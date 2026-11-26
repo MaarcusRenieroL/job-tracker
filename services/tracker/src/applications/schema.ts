@@ -11,6 +11,7 @@ export { stages };
 export const stageSchema = z.enum(stages);
 const text = z.string().trim().max(3000);
 const longText = z.string().trim().max(24000);
+const formattedText = z.string().max(48000).optional();
 const url = z.url({ protocol: /^https?$/ });
 const date = z.iso.date();
 export const interviewTypes = [
@@ -29,9 +30,13 @@ export const interviewSchema = z.strictObject({
   interviewer: text.optional(),
   meetingLink: url.optional(),
   topics: longText.optional(),
+  topicsHtml: formattedText,
   preparation: longText.optional(),
+  preparationHtml: formattedText,
   questions: longText.optional(),
+  questionsHtml: formattedText,
   review: longText.optional(),
+  reviewHtml: formattedText,
   result: z.enum(["Scheduled", "Passed", "Rejected", "Pending", "Cancelled"]),
 });
 
@@ -49,7 +54,9 @@ export const referralSchema = z.strictObject({
     "Declined",
   ]),
   message: longText.optional(),
+  messageHtml: formattedText,
   response: longText.optional(),
+  responseHtml: formattedText,
   followUp: date.optional(),
   outcome: text.optional(),
 });
@@ -73,6 +80,7 @@ export const assessmentSchema = z.strictObject({
   repoUrl: url.optional(),
   outcome: text.optional(),
   notes: longText.optional(),
+  notesHtml: formattedText,
 });
 
 export const applicationListQuery = z.object({
@@ -95,6 +103,7 @@ export const applicationSchema = z.strictObject({
   workModel: z.enum(["Remote", "Hybrid", "On-site"]).optional(),
   salaryRange: text.optional(),
   description: longText.optional(),
+  descriptionHtml: formattedText,
   source: text.optional(),
   skills: z.array(text.min(1).max(120)).max(50).optional(),
   deadline: date.optional(),
@@ -109,10 +118,13 @@ export const applicationSchema = z.strictObject({
     )
     .optional(),
   notes: longText.optional(),
+  notesHtml: formattedText,
   appliedAt: date.optional(),
   resumeVersion: text.optional(),
   resumeText: longText.optional(),
+  resumeTextHtml: formattedText,
   coverLetter: longText.optional(),
+  coverLetterHtml: formattedText,
   followUp: date.optional(),
   rejectionReason: text.optional(),
   offer: z
@@ -123,6 +135,7 @@ export const applicationSchema = z.strictObject({
       currency: z.string().regex(/^[A-Z]{3}$/),
       deadline: date.optional(),
       notes: longText.optional(),
+      notesHtml: formattedText,
     })
     .optional(),
   referrals: z.array(referralSchema).max(50).optional(),
@@ -140,14 +153,18 @@ export const updateSchema = applicationSchema.partial().extend({
         "workModel",
         "salaryRange",
         "description",
+        "descriptionHtml",
         "source",
         "deadline",
         "priority",
         "notes",
+        "notesHtml",
         "appliedAt",
         "resumeVersion",
         "resumeText",
+        "resumeTextHtml",
         "coverLetter",
+        "coverLetterHtml",
         "followUp",
         "rejectionReason",
       ]),

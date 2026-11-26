@@ -3,6 +3,7 @@ import { useState, type SetStateAction } from "react";
 import { useController, useForm } from "react-hook-form";
 import { z } from "zod";
 import type { Application } from "@/types/application";
+import type { Profile } from "@/features/profile/profile";
 import { initialFields, localDateTime } from "./editor-form";
 
 const jobUrl = z.url({ protocol: /^https?$/ });
@@ -44,9 +45,15 @@ function updateField<T extends EditorField>(
     onChange(typeof next === "function" ? next(getValue()) : next);
 }
 
-export function useEditorForm(job: Application | undefined, resumeText: string) {
+export function useEditorForm(job: Application | undefined, profile: Profile) {
   const [defaultValues] = useState<EditorFormValues>(() => ({
-    values: { ...initialFields(job), ...(!job ? { resumeText } : {}) },
+    values: {
+      ...initialFields(job),
+      ...(!job && {
+        resumeText: profile.resumeText,
+        resumeTextHtml: profile.resumeHtml ?? "",
+      }),
+    },
     assessments: job?.assessments ?? [],
     referrals: job?.referrals ?? [],
     interviews: (job?.interviews ?? []).map((entry) => ({

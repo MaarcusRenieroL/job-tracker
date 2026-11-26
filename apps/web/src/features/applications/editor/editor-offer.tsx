@@ -3,6 +3,7 @@ import { TabsContent } from "@/components/ui/tabs";
 import { CardFrame, CardFrameHeader, CardFramePanel, CardFrameTitle } from "@/components/ui/card-frame";
 import { formatCurrency } from "@/lib/format";
 import { FieldGrid } from "./editor-controls";
+import { editorFieldValues } from "./editor-form";
 import { offerFields } from "./editor-fields";
 
 export function EditorOffer({ compensation, setCompensation }: { compensation: Record<string, string>; setCompensation: Dispatch<SetStateAction<Record<string, string>>> }) {
@@ -41,10 +42,10 @@ export function EditorOffer({ compensation, setCompensation }: { compensation: R
                   <FieldGrid
                     fields={offerFields}
                     values={compensation}
-                    change={(key, value) =>
+                    change={(key, value, html) =>
                       setCompensation((previous) => ({
                         ...previous,
-                        [key]: value,
+                        ...editorFieldValues(key, value, html),
                       }))
                     }
                     idPrefix="offer"

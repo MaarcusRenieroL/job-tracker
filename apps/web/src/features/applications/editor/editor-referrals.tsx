@@ -1,15 +1,17 @@
-import type { Dispatch, SetStateAction } from "react";
+import { useState, type Dispatch, type SetStateAction } from "react";
 import { Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CardFrame, CardFrameHeader, CardFramePanel, CardFrameTitle } from "@/components/ui/card-frame";
 import { TabsContent } from "@/components/ui/tabs";
-import { Textarea } from "@/components/ui/textarea";
+import { RichTextInput } from "@/components/ui/rich-text-editor";
 import { api } from "../../../lib/api";
 import type { Application, Entry } from "../../../types/application";
 import { EntryCollection } from "./editor-controls";
 import { referralFields } from "./editor-fields";
 
 export function EditorReferrals({ job, referrals, setReferrals, draft, setDraft, pending, run, token }: { job?: Application; referrals: Entry[]; setReferrals: Dispatch<SetStateAction<Entry[]>>; draft: string; setDraft: Dispatch<SetStateAction<string>>; pending: boolean; run: (action: () => Promise<void>) => Promise<void>; token: string }) {
+  const [draftHtml, setDraftHtml] = useState("");
+  const [hasDraft, setHasDraft] = useState(false);
   return (
             <TabsContent id="referrals" className="flex flex-col gap-5">
               <EntryCollection
@@ -48,6 +50,8 @@ export function EditorReferrals({ job, referrals, setReferrals, draft, setDraft,
                                     "POST",
                                   );
                                   setDraft(result.draft);
+                                  setDraftHtml("");
+                                  setHasDraft(true);
                                 })
                               }
                             >
@@ -60,7 +64,7 @@ export function EditorReferrals({ job, referrals, setReferrals, draft, setDraft,
                 }
               />
 
-              {draft && (
+              {hasDraft && (
                 <CardFrame>
                   <CardFrameHeader>
                     <CardFrameTitle>
@@ -68,11 +72,14 @@ export function EditorReferrals({ job, referrals, setReferrals, draft, setDraft,
                     </CardFrameTitle>
                   </CardFrameHeader>
                   <CardFramePanel className="p-4">
-                    <Textarea
-                      rows={6}
-                      value={draft}
-                      onChange={(e) => setDraft(e.target.value)}
-                      aria-label="Referral message draft"
+                    <RichTextInput
+                      label="Referral message draft"
+                      text={draft}
+                      html={draftHtml}
+                      onChange={(text, html) => {
+                        setDraft(text);
+                        setDraftHtml(html);
+                      }}
                     />
                   </CardFramePanel>
                 </CardFrame>

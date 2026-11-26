@@ -1,20 +1,30 @@
 import type { Application, Entry } from "../../../types/application";
 import { applicationFields, postingFields } from "./editor-fields";
 
+export function editorFieldValues(key: string, value: string, html?: string) {
+  return html === undefined
+    ? { [key]: value }
+    : { [key]: value, [`${key}Html`]: html };
+}
+
 const clearableKeys = [
   "jobUrl",
   "location",
   "workModel",
   "salaryRange",
   "description",
+  "descriptionHtml",
   "source",
   "deadline",
   "priority",
   "notes",
+  "notesHtml",
   "appliedAt",
   "resumeVersion",
   "resumeText",
+  "resumeTextHtml",
   "coverLetter",
+  "coverLetterHtml",
   "followUp",
   "rejectionReason",
 ] as const;
@@ -30,6 +40,10 @@ export function initialFields(job?: Application) {
       continue;
     const value = job?.[field.name as keyof Application];
     values[field.name] = typeof value === "string" ? value : "";
+    if (field.type === "textarea") {
+      const formatted = job?.[`${field.name}Html` as keyof Application];
+      values[`${field.name}Html`] = typeof formatted === "string" ? formatted : "";
+    }
   }
   values.skills = job?.skills?.join(", ") ?? "";
   values.tags = job?.tags?.join(", ") ?? "";
@@ -104,6 +118,7 @@ export function applicationPayload({ job, values, assessments, referrals, interv
                 ),
                 deadline: compensation.deadline?.trim() || undefined,
                 notes: compensation.notes?.trim() || undefined,
+                notesHtml: compensation.notesHtml || undefined,
               },
             }
           : job?.offer

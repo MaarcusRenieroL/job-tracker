@@ -75,7 +75,7 @@ export function EditorSheet({
     setInterviews,
     compensation,
     setCompensation,
-  } = useEditorForm(job, profile.resumeText);
+  } = useEditorForm(job, profile);
   const [match, setMatch] = useState<Match>();
   const [draft, setDraft] = useState("");
   const [confirmDelete, setConfirmDelete] = useState(false);

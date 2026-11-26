@@ -27,6 +27,7 @@ export type Assessment = {
   repoUrl?: string;
   outcome?: string;
   notes?: string;
+  notesHtml?: string;
 };
 
 export type OfferData = {
@@ -36,6 +37,7 @@ export type OfferData = {
   currency: string;
   deadline?: string;
   notes?: string;
+  notesHtml?: string;
 };
 
 export type Application = {
@@ -52,14 +54,18 @@ export type Application = {
   workModel?: string;
   salaryRange?: string;
   description?: string;
+  descriptionHtml?: string;
   source?: string;
   skills?: string[];
   deadline?: string;
   notes?: string;
+  notesHtml?: string;
   appliedAt?: string;
   resumeVersion?: string;
   resumeText?: string;
+  resumeTextHtml?: string;
   coverLetter?: string;
+  coverLetterHtml?: string;
   followUp?: string;
   rejectionReason?: string;
   offer?: OfferData;

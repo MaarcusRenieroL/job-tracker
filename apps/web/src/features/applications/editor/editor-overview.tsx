@@ -3,18 +3,20 @@ import { Button } from "@/components/ui/button";
 import { CardFrame, CardFrameHeader, CardFramePanel, CardFrameTitle } from "@/components/ui/card-frame";
 import { TabsContent } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import { RichTextInput } from "@/components/ui/rich-text-editor";
 import { api } from "../../../lib/api";
 import type { Application } from "../../../types/application";
 import { analyzeDescription } from "../text-analysis";
 import { FieldGrid } from "./editor-controls";
+import { editorFieldValues } from "./editor-form";
 import { applicationFields, postingFields } from "./editor-fields";
 
 export function EditorOverview({ job, values, setValues, pending, run, token }: { job?: Application; values: Record<string, string>; setValues: Dispatch<SetStateAction<Record<string, string>>>; pending: boolean; run: (action: () => Promise<void>) => Promise<void>; token: string }) {
   const [importUrl, setImportUrl] = useState("");
   const [importMessage, setImportMessage] = useState("");
   const [analysis, setAnalysis] = useState<ReturnType<typeof analyzeDescription>>();
-  const change = (key: string, value: string) => setValues((previous) => ({ ...previous, [key]: value }));
+  const change = (key: string, value: string, html?: string) =>
+    setValues((previous) => ({ ...previous, ...editorFieldValues(key, value, html) }));
   return (
             <TabsContent id="overview" className="flex flex-col gap-5">
               {!job && (
@@ -95,13 +97,12 @@ export function EditorOverview({ job, values, setValues, pending, run, token }: 
                     >
                       Paste job description
                     </label>
-                    <Textarea
+                    <RichTextInput
                       id="quick-description"
-                      rows={6}
-                      value={values.description ?? ""}
-                      onChange={(event) =>
-                        change("description", event.target.value)
-                      }
+                      label="Paste job description"
+                      text={values.description ?? ""}
+                      html={values.descriptionHtml}
+                      onChange={(text, html) => change("description", text, html)}
                       placeholder="Paste the job posting here…"
                     />
                     <Button

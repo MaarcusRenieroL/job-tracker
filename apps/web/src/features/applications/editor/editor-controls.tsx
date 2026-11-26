@@ -24,10 +24,11 @@ import {
 } from "@/components/ui/select";
 import { DatePicker } from "@/components/ui/date-picker";
 import { DateTimePicker } from "@/components/ui/date-time-picker";
-import { Textarea } from "@/components/ui/textarea";
+import { RichTextInput } from "@/components/ui/rich-text-editor";
 import { Plus, Trash2 } from "lucide-react";
 import { type Entry, type Stage } from "../../../types/application";
 
+import { editorFieldValues } from "./editor-form";
 import { NONE_KEY, type Field } from "./editor-fields";
 
 export function FieldGrid({
@@ -38,7 +39,7 @@ export function FieldGrid({
 }: {
   fields: Field[];
   values: Record<string, string | undefined>;
-  change: (key: string, value: string) => void;
+  change: (key: string, value: string, html?: string) => void;
   idPrefix: string;
 }) {
   return (
@@ -109,13 +110,13 @@ export function FieldGrid({
             ) : field.type === "date" ? (
               <DatePicker label={field.label} value={value} onChange={(date) => change(field.name, date)} />
             ) : field.type === "textarea" ? (
-              <Textarea
+              <RichTextInput
                 id={inputId}
-                value={value}
-                rows={3}
+                label={field.label}
+                text={value}
+                html={values[`${field.name}Html`]}
                 placeholder={field.placeholder}
-                onChange={(e) => change(field.name, e.target.value)}
-                className="bg-background"
+                onChange={(text, html) => change(field.name, text, html)}
               />
             ) : (
               <Input
@@ -226,11 +227,11 @@ export function EntryCollection({
                     fields={fields}
                     values={entry}
                     idPrefix={`${idPrefix}-${entry.id}`}
-                    change={(key, value) =>
+                    change={(key, value, html) =>
                       setEntries(
                         entries.map((item) =>
                           item.id === entry.id
-                            ? { ...item, [key]: value }
+                            ? { ...item, ...editorFieldValues(key, value, html) }
                             : item,
                         ),
                       )
