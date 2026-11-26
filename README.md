@@ -37,6 +37,7 @@ Start `pnpm --filter @job-tracker/auth dev`, `pnpm --filter @job-tracker/tracker
 - **Auth** listens on port 3001. It stores users and Argon2id password hashes in `job_tracker_auth.users`, normalizes email addresses, and enforces uniqueness with an index. It issues 15-minute Ed25519 JWTs.
 - **Tracker** listens on port 3002. It verifies Auth tokens locally using the public key and filters every application operation by the verified JWT subject. It owns `job_tracker_tracker.applications`, indexed by owner and update time.
 - **React** connects to both services through Vite's HTTP proxy. The apps exchange identity through the signed token. Tracker can verify tokens independently once it has the public key.
+- **Application options** in `packages/application-options` define the stage, priority, and assessment values used by the React controls and Tracker validation. Tracker owns the application schemas and MongoDB access.
 - Each user profile stores their name and resume text in `job_tracker_tracker.profiles`. The unique owner index isolates profiles. Each application document stores posting fields, interview rounds, referrals, and stage history. The version filter, stage update, and history append form a single atomic MongoDB write. A competing update returns HTTP 409.
 
 The Compose deployment binds MongoDB to loopback for local development. Both services can override the connection URI through `MONGO_URI`.

@@ -1,0 +1,6 @@
+{
+  "name": "@job-tracker/application-options",
+  "private": true,
+  "type": "module",
+  "exports": "./index.ts"
+}

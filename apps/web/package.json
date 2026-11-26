@@ -11,6 +11,7 @@
     "typecheck": "tsc -b"
   },
   "dependencies": {
+    "@job-tracker/application-options": "workspace:*",
     "@base-ui/react": "^1.9.0",
     "@editorcn/editor": "^0.5.0",
     "@floating-ui/dom": "^1.8.0",

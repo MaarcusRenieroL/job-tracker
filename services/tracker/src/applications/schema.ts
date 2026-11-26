@@ -1,18 +1,13 @@
+import {
+  assessmentStatuses,
+  assessmentTypes,
+  priorities,
+  stages,
+} from "@job-tracker/application-options";
 import { z } from "zod";
 
-export const stages = [
-  "Discovered",
-  "Saved",
-  "Applied",
-  "Recruiter Contacted",
-  "Screening",
-  "Technical Interview",
-  "Final Interview",
-  "Offer",
-  "Rejected",
-  "Withdrawn",
-  "Ghosted",
-] as const;
+export { stages };
+
 export const stageSchema = z.enum(stages);
 const text = z.string().trim().max(3000);
 const longText = z.string().trim().max(24000);
@@ -59,7 +54,7 @@ export const referralSchema = z.strictObject({
   outcome: text.optional(),
 });
 
-export const prioritySchema = z.enum(["High", "Medium", "Low"]);
+export const prioritySchema = z.enum(priorities);
 export const tagSchema = z.string().trim().min(1).max(40);
 const tagsSchema = z
   .array(tagSchema)
@@ -71,14 +66,8 @@ const tagsSchema = z
 export const assessmentSchema = z.strictObject({
   id: z.uuid(),
   title: text.min(1).max(120),
-  type: z.enum(["Online assessment", "Take-home"]),
-  status: z.enum([
-    "Not started",
-    "In progress",
-    "Submitted",
-    "Completed",
-    "Cancelled",
-  ]),
+  type: z.enum(assessmentTypes),
+  status: z.enum(assessmentStatuses),
   deadline: date.optional(),
   submittedAt: date.optional(),
   repoUrl: url.optional(),

@@ -1,32 +1,18 @@
-export const stages = [
-  "Discovered",
-  "Saved",
-  "Applied",
-  "Recruiter Contacted",
-  "Screening",
-  "Technical Interview",
-  "Final Interview",
-  "Offer",
-  "Rejected",
-  "Withdrawn",
-  "Ghosted",
-] as const;
+import {
+  assessmentStatuses,
+  assessmentTypes,
+  priorities,
+  stages,
+} from "@job-tracker/application-options";
+
+export { stages, priorities, assessmentTypes, assessmentStatuses };
 
 export type Stage = (typeof stages)[number];
 
-export const priorities = ["High", "Medium", "Low"] as const;
 export type Priority = (typeof priorities)[number];
 
-export const assessmentTypes = ["Online assessment", "Take-home"] as const;
 export type AssessmentType = (typeof assessmentTypes)[number];
 
-export const assessmentStatuses = [
-  "Not started",
-  "In progress",
-  "Submitted",
-  "Completed",
-  "Cancelled",
-] as const;
 export type AssessmentStatus = (typeof assessmentStatuses)[number];
 
 export type Entry = Record<string, string | undefined> & { id: string };
