@@ -1,6 +1,5 @@
 import { useState } from "react";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
+import { CalendarClock } from "lucide-react";
 import { AgendaKindBadge } from "@/components/status-badges";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -11,6 +10,7 @@ import {
   CardFramePanel,
   CardFrameTitle,
 } from "@/components/ui/card-frame";
+import { DatePicker } from "@/components/ui/date-picker";
 import {
   Empty,
   EmptyDescription,
@@ -18,11 +18,19 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@/components/ui/empty";
-import { DatePicker } from "@/components/ui/date-picker";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { formatRelativeDays } from "@/lib/format";
-import { CalendarClock } from "lucide-react";
-import { type AgendaEvent } from "../../types/application";
+import type { AgendaEvent } from "../../types/application";
+
+const PAGE_SIZE = 10;
 
 export function AgendaDesk({
   events,
@@ -40,12 +48,32 @@ export function AgendaDesk({
   onSelectApplication: (applicationId: string) => void;
 }) {
   const [query, setQuery] = useState("");
-  const [order, setOrder] = useState("earliest");
+  const [order, setOrder] = useState<"earliest" | "latest">("earliest");
   const [page, setPage] = useState(0);
-  const filtered = events.filter((event) => [event.title, event.company, event.role, event.kind].join(" ").toLowerCase().includes(query.trim().toLowerCase())).sort((a, b) => order === "earliest" ? (a.dateTime ?? a.date).localeCompare(b.dateTime ?? b.date) : (b.dateTime ?? b.date).localeCompare(a.dateTime ?? a.date));
-  const pageSize = 10;
-  const currentPage = Math.min(page, Math.max(0, Math.ceil(filtered.length / pageSize) - 1));
-  const visible = filtered.slice(currentPage * pageSize, (currentPage + 1) * pageSize);
+
+  const normalizedQuery = query.trim().toLowerCase();
+  const filtered = events
+    .filter((event) =>
+      [event.title, event.company, event.role, event.kind]
+        .join(" ")
+        .toLowerCase()
+        .includes(normalizedQuery),
+    )
+    .sort((a, b) => {
+      const aStamp = a.dateTime ?? a.date;
+      const bStamp = b.dateTime ?? b.date;
+      return order === "earliest"
+        ? aStamp.localeCompare(bStamp)
+        : bStamp.localeCompare(aStamp);
+    });
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const currentPage = Math.min(page, totalPages - 1);
+  const visible = filtered.slice(
+    currentPage * PAGE_SIZE,
+    (currentPage + 1) * PAGE_SIZE,
+  );
+
   function applyPreset(daysAhead?: number) {
     const start = new Date().toISOString().slice(0, 10);
     setFromDate(start);
@@ -64,24 +92,40 @@ export function AgendaDesk({
         <CardFramePanel className="flex flex-wrap items-center justify-between gap-3 p-3.5">
           <div className="flex flex-wrap items-center gap-3">
             <div className="flex items-center gap-2">
-              <Label
-                className="text-xs text-muted-foreground"
-              >
-                From
-              </Label>
-              <DatePicker label="From date" value={fromDate} onChange={setFromDate} />
+              <Label className="text-xs text-muted-foreground">From</Label>
+              <DatePicker
+                label="From date"
+                value={fromDate}
+                onChange={setFromDate}
+              />
             </div>
             <div className="flex items-center gap-2">
-              <Label
-                className="text-xs text-muted-foreground"
-              >
-                To
-              </Label>
-              <DatePicker label="To date" value={toDate} onChange={setToDate} />
+              <Label className="text-xs text-muted-foreground">To</Label>
+              <DatePicker
+                label="To date"
+                value={toDate}
+                onChange={setToDate}
+              />
             </div>
-            <Select aria-label="Date range preset" placeholder="Date range" onSelectionChange={(key) => { if (key !== null) { applyPreset(key === "all" ? undefined : Number(key)); setPage(0); } }}>
-              <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
-              <SelectContent><SelectItem id="7">Next 7 days</SelectItem><SelectItem id="14">Next 14 days</SelectItem><SelectItem id="28">Next 28 days</SelectItem><SelectItem id="all">All upcoming</SelectItem></SelectContent>
+            <Select
+              aria-label="Date range preset"
+              placeholder="Date range"
+              onSelectionChange={(key) => {
+                if (key !== null) {
+                  applyPreset(key === "all" ? undefined : Number(key));
+                  setPage(0);
+                }
+              }}
+            >
+              <SelectTrigger className="w-40">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem id="7">Next 7 days</SelectItem>
+                <SelectItem id="14">Next 14 days</SelectItem>
+                <SelectItem id="28">Next 28 days</SelectItem>
+                <SelectItem id="all">All upcoming</SelectItem>
+              </SelectContent>
             </Select>
           </div>
           <span className="text-xs text-muted-foreground tabular-nums">
@@ -91,9 +135,35 @@ export function AgendaDesk({
       </CardFrame>
 
       <div className="flex flex-wrap gap-2">
-        <Input aria-label="Search schedule" placeholder="Search company, role, or event…" value={query} onChange={(event) => { setQuery(event.target.value); setPage(0); }} className="w-full sm:w-72" />
-        <Select aria-label="Sort schedule" selectedKey={order} onSelectionChange={(key) => { if (key) setOrder(String(key)); }}><SelectTrigger className="w-40"><SelectValue /></SelectTrigger><SelectContent><SelectItem id="earliest">Earliest first</SelectItem><SelectItem id="latest">Latest first</SelectItem></SelectContent></Select>
+        <Input
+          aria-label="Search schedule"
+          placeholder="Search company, role, or event…"
+          value={query}
+          onChange={(event) => {
+            setQuery(event.target.value);
+            setPage(0);
+          }}
+          className="w-full bg-card sm:w-72"
+        />
+        <Select
+          aria-label="Sort schedule"
+          selectedKey={order}
+          onSelectionChange={(key) => {
+            if (key === "earliest" || key === "latest") {
+              setOrder(key);
+            }
+          }}
+        >
+          <SelectTrigger className="w-40 bg-card">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem id="earliest">Earliest first</SelectItem>
+            <SelectItem id="latest">Latest first</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
+
       {filtered.length === 0 ? (
         <CardFrame>
           <CardFramePanel>
@@ -102,9 +172,7 @@ export function AgendaDesk({
                 <EmptyMedia variant="icon">
                   <CalendarClock />
                 </EmptyMedia>
-                <EmptyTitle>
-                  No matching events in this date window
-                </EmptyTitle>
+                <EmptyTitle>No matching events in this date window</EmptyTitle>
                 <EmptyDescription>
                   Scheduled interview rounds, active assessments, follow-ups,
                   and offer decision dates automatically appear here in
@@ -119,7 +187,9 @@ export function AgendaDesk({
           <CardFrameHeader>
             <CardFrameTitle>Chronological Schedule</CardFrameTitle>
             <CardFrameDescription>
-              {order === "earliest" ? "Sorted earliest to latest" : "Sorted latest to earliest"}
+              {order === "earliest"
+                ? "Sorted earliest to latest"
+                : "Sorted latest to earliest"}
             </CardFrameDescription>
           </CardFrameHeader>
           <CardFramePanel className="divide-y divide-border/70">
@@ -139,12 +209,12 @@ export function AgendaDesk({
                   key={event.id}
                   className="flex flex-col justify-between gap-3 px-4 py-3.5 transition-colors hover:bg-muted/35 sm:flex-row sm:items-center"
                 >
-                  <div className="flex items-center gap-3.5 min-w-0">
+                  <div className="flex min-w-0 items-center gap-3.5">
                     <div className="flex h-12 w-12 shrink-0 flex-col items-center justify-center rounded-xl border border-border/80 bg-muted/45 tabular-nums">
-                      <span className="text-xs font-semibold uppercase text-muted-foreground">
+                      <span className="text-xs font-semibold text-muted-foreground uppercase">
                         {month}
                       </span>
-                      <span className="text-sm font-semibold leading-tight text-foreground">
+                      <span className="text-sm leading-tight font-semibold text-foreground">
                         {day}
                       </span>
                     </div>
@@ -191,7 +261,31 @@ export function AgendaDesk({
               );
             })}
           </CardFramePanel>
-          <div className="flex items-center justify-between gap-3 border-t px-4 py-3 text-xs text-muted-foreground"><span>{filtered.length} matching events · Page {currentPage + 1} of {Math.max(1, Math.ceil(filtered.length / pageSize))}</span><div className="flex gap-2"><Button variant="outline" size="xs" isDisabled={currentPage === 0} onPress={() => setPage(currentPage - 1)}>Previous</Button><Button variant="outline" size="xs" isDisabled={(currentPage + 1) * pageSize >= filtered.length} onPress={() => setPage(currentPage + 1)}>Next</Button></div></div>
+          <div className="flex items-center justify-between gap-3 border-t border-border/70 px-4 py-2.5 text-xs text-muted-foreground tabular-nums">
+            <span>
+              {filtered.length} matching{" "}
+              {filtered.length === 1 ? "event" : "events"} · Page{" "}
+              {currentPage + 1} of {totalPages}
+            </span>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="xs"
+                isDisabled={currentPage === 0}
+                onPress={() => setPage(currentPage - 1)}
+              >
+                Previous
+              </Button>
+              <Button
+                variant="outline"
+                size="xs"
+                isDisabled={(currentPage + 1) * PAGE_SIZE >= filtered.length}
+                onPress={() => setPage(currentPage + 1)}
+              >
+                Next
+              </Button>
+            </div>
+          </div>
         </CardFrame>
       )}
     </div>

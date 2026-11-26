@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/card-frame";
 import { TabsContent } from "@/components/ui/tabs";
 import { RichTextInput } from "@/components/ui/rich-text-editor";
+import { useCopyFeedback } from "@/hooks/use-copy-feedback";
 import { api } from "../../../lib/api";
 import type { Application, Entry } from "../../../types/application";
 import { EntryCollection } from "./editor-controls";
@@ -35,16 +36,9 @@ export function EditorReferrals({
 }) {
   const [draftHtml, setDraftHtml] = useState("");
   const [targetReferralId, setTargetReferralId] = useState<string | null>(null);
-  const [copied, setCopied] = useState(false);
+  const { copied, copyText } = useCopyFeedback();
 
   const targetReferral = referrals.find((item) => item.id === targetReferralId);
-
-  async function copyDraft() {
-    if (!draft.trim()) return;
-    await navigator.clipboard.writeText(draft);
-    setCopied(true);
-    window.setTimeout(() => setCopied(false), 1800);
-  }
 
   function applyToReferral() {
     if (!targetReferralId) return;
@@ -126,7 +120,7 @@ export function EditorReferrals({
                 variant="outline"
                 size="xs"
                 isDisabled={!draft.trim()}
-                onPress={() => void copyDraft()}
+                onPress={() => void copyText(draft)}
               >
                 {copied ? (
                   <>

@@ -1,4 +1,5 @@
-import type { Profile } from "../profile/profile";
+import { lazy, Suspense, useCallback, useState } from "react";
+import { BriefcaseBusiness, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CardFrame, CardFramePanel } from "@/components/ui/card-frame";
 import {
@@ -10,31 +11,65 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
-import { BriefcaseBusiness, Plus } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
-import { Analytics } from "../analytics/analytics";
-import { api } from "../../lib/api";
-import { EditorSheet, type EditorTab } from "../applications/editor/editor-sheet";
-import { type Application, type Priority } from "../../types/application";
-
-import { AgendaDesk } from "../agenda/agenda-desk";
-import { InsetHeaderBar } from "./navigation/inset-header-bar";
-import { OffersDesk } from "../offers/offers-desk";
-import type { Session } from "../auth/session";
 import { useTheme } from "../../hooks/use-theme";
-import { useWorkspaceData } from "./use-workspace-data";
-import { WorkspaceCommands } from "./navigation/workspace-commands";
-import { WorkspaceSidebar } from "./navigation/workspace-sidebar";
-import { ApplicationFilters } from "./applications/application-filters";
+import { api } from "../../lib/api";
+import type { Application, Priority } from "../../types/application";
+import type { EditorTab } from "../applications/editor/editor-sheet";
+import type { Session } from "../auth/session";
+import type { Profile } from "../profile/profile";
 import { ApplicationBoard } from "./applications/application-board";
+import { ApplicationFilters } from "./applications/application-filters";
 import { ApplicationLedger } from "./applications/application-ledger";
 import { ApplicationSummary } from "./applications/application-summary";
 import {
   filterApplications,
   summarizeApplications,
 } from "./applications/workspace-application-data";
+import { InsetHeaderBar } from "./navigation/inset-header-bar";
+import { WorkspaceCommands } from "./navigation/workspace-commands";
+import { WorkspaceSidebar } from "./navigation/workspace-sidebar";
+import { useWorkspaceData } from "./use-workspace-data";
+import { useWorkspaceShortcuts } from "./use-workspace-shortcuts";
+
+const Analytics = lazy(() =>
+  import("../analytics/analytics").then((mod) => ({ default: mod.Analytics })),
+);
+const AgendaDesk = lazy(() =>
+  import("../agenda/agenda-desk").then((mod) => ({ default: mod.AgendaDesk })),
+);
+const OffersDesk = lazy(() =>
+  import("../offers/offers-desk").then((mod) => ({ default: mod.OffersDesk })),
+);
+const EditorSheet = lazy(() =>
+  import("../applications/editor/editor-sheet").then((mod) => ({
+    default: mod.EditorSheet,
+  })),
+);
 
 type PageId = "applications" | "agenda" | "offers" | "analytics";
+
+const PAGE_META: Record<PageId, { title: string; subtitle: string }> = {
+  applications: {
+    title: "Applications",
+    subtitle:
+      "Filter, prioritize, and advance opportunities across all 11 pipeline stages.",
+  },
+  agenda: {
+    title: "Agenda",
+    subtitle:
+      "Chronological deadlines across interviews, coding assessments, follow-ups, and offers.",
+  },
+  offers: {
+    title: "Offers",
+    subtitle:
+      "Compare base, bonus, equity, and decision windows in original currencies.",
+  },
+  analytics: {
+    title: "Analytics",
+    subtitle:
+      "Conversion rates, stage velocity, channel performance, and recurring skill gaps.",
+  },
+};
 
 export function Workspace({
   session,
@@ -73,43 +108,20 @@ export function Workspace({
     [],
   );
 
-  useEffect(() => {
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (
-        event.defaultPrevented ||
-        (event.target instanceof HTMLElement && event.target.isContentEditable)
-      ) return;
+  const toggleCommand = useCallback(() => {
+    setCommandOpen((prev) => !prev);
+  }, []);
 
-      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
-        event.preventDefault();
-        setCommandOpen((prev) => !prev);
-        return;
-      }
-      if (
-        event.key.toLowerCase() === "n" &&
-        !event.metaKey &&
-        !event.ctrlKey &&
-        !event.altKey &&
-        !editorState &&
-        !commandOpen
-      ) {
-        const el = event.target as HTMLElement | null;
-        if (
-          el &&
-          (el.tagName === "INPUT" ||
-            el.tagName === "TEXTAREA" ||
-            el.tagName === "SELECT" ||
-            el.isContentEditable)
-        ) {
-          return;
-        }
-        event.preventDefault();
-        openEditor("new");
-      }
-    };
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [commandOpen, editorState, openEditor]);
+  const handleNewApplication = useCallback(() => {
+    openEditor("new");
+  }, [openEditor]);
+
+  useWorkspaceShortcuts({
+    editorOpen: Boolean(editorState),
+    commandOpen,
+    onToggleCommand: toggleCommand,
+    onNewApplication: handleNewApplication,
+  });
 
   const { jobs, agenda, offerRows, error, loading, replace, move, deleteJob } =
     useWorkspaceData(session.token, agendaFrom, agendaTo);
@@ -130,30 +142,9 @@ export function Workspace({
     setQuery("");
   }
 
-  const hasFilters = Boolean(stage || priorityFilter || tagFilter.length || query);
-
-  const pageMeta: Record<PageId, { title: string; subtitle: string }> = {
-    applications: {
-      title: "Applications",
-      subtitle:
-        "Filter, prioritize, and advance opportunities across all 11 pipeline stages.",
-    },
-    agenda: {
-      title: "Agenda",
-      subtitle:
-        "Chronological deadlines across interviews, coding assessments, follow-ups, and offers.",
-    },
-    offers: {
-      title: "Offers",
-      subtitle:
-        "Compare base, bonus, equity, and decision windows in original currencies.",
-    },
-    analytics: {
-      title: "Analytics",
-      subtitle:
-        "Conversion rates, stage velocity, channel performance, and recurring skill gaps.",
-    },
-  };
+  const hasFilters = Boolean(
+    stage || priorityFilter || tagFilter.length || query,
+  );
 
   function openApplicationById(
     applicationId: string,
@@ -164,6 +155,14 @@ export function Workspace({
       openEditor(found, tab);
     }
   }
+
+  const deskFallback = (
+    <CardFrame>
+      <CardFramePanel className="p-8 text-center text-sm text-muted-foreground">
+        Loading view…
+      </CardFramePanel>
+    </CardFrame>
+  );
 
   return (
     <SidebarProvider overlay>
@@ -185,7 +184,7 @@ export function Workspace({
 
       <SidebarInset className="min-w-0 overflow-x-hidden">
         <InsetHeaderBar
-          title={pageMeta[page].title}
+          title={PAGE_META[page].title}
           countText={
             page === "applications"
               ? visible.length === jobs.length
@@ -196,16 +195,16 @@ export function Workspace({
           dark={dark}
           onToggleTheme={toggle}
           onOpenCommand={() => setCommandOpen(true)}
-          onNewApplication={() => openEditor("new")}
+          onNewApplication={handleNewApplication}
         />
 
         <div className="mx-auto flex w-full max-w-[1440px] min-w-0 flex-1 flex-col gap-5 p-4 lg:p-6">
           <div className="flex flex-col gap-0.5">
             <h1 className="text-xl font-semibold tracking-tight text-foreground">
-              {pageMeta[page].title}
+              {PAGE_META[page].title}
             </h1>
             <p className="text-sm text-muted-foreground">
-              {pageMeta[page].subtitle}
+              {PAGE_META[page].subtitle}
             </p>
           </div>
 
@@ -225,21 +224,29 @@ export function Workspace({
               </CardFramePanel>
             </CardFrame>
           ) : page === "analytics" ? (
-            <Analytics jobs={jobs} token={session.token} />
+            <Suspense fallback={deskFallback}>
+              <Analytics jobs={jobs} token={session.token} />
+            </Suspense>
           ) : page === "agenda" ? (
-            <AgendaDesk
-              events={agenda}
-              fromDate={agendaFrom}
-              toDate={agendaTo}
-              setFromDate={setAgendaFrom}
-              setToDate={setAgendaTo}
-              onSelectApplication={(id) => openApplicationById(id, "overview")}
-            />
+            <Suspense fallback={deskFallback}>
+              <AgendaDesk
+                events={agenda}
+                fromDate={agendaFrom}
+                toDate={agendaTo}
+                setFromDate={setAgendaFrom}
+                setToDate={setAgendaTo}
+                onSelectApplication={(id) =>
+                  openApplicationById(id, "overview")
+                }
+              />
+            </Suspense>
           ) : page === "offers" ? (
-            <OffersDesk
-              offers={offerRows}
-              onSelectOffer={(id) => openApplicationById(id, "offer")}
-            />
+            <Suspense fallback={deskFallback}>
+              <OffersDesk
+                offers={offerRows}
+                onSelectOffer={(id) => openApplicationById(id, "offer")}
+              />
+            </Suspense>
           ) : (
             <>
               <ApplicationSummary
@@ -264,7 +271,9 @@ export function Workspace({
                 view={view}
                 setView={setView}
                 showAllBoardStages={showAllBoardStages}
-                toggleBoardStages={() => setShowAllBoardStages((prev) => !prev)}
+                toggleBoardStages={() =>
+                  setShowAllBoardStages((prev) => !prev)
+                }
               />
 
               {visible.length === 0 ? (
@@ -296,7 +305,7 @@ export function Workspace({
                             Reset filters
                           </Button>
                         ) : (
-                          <Button size="sm" onPress={() => openEditor("new")}>
+                          <Button size="sm" onPress={handleNewApplication}>
                             <Plus className="size-3.5" /> Add first application
                           </Button>
                         )}
@@ -327,39 +336,43 @@ export function Workspace({
       </SidebarInset>
 
       {editorState && (
-        <EditorSheet
-          profile={profile}
-          key={
-            editorState.target === "new"
-              ? `new-${editorState.tab}`
-              : `${editorState.target._id}-${editorState.tab}`
-          }
-          open={Boolean(editorState)}
-          job={editorState.target === "new" ? undefined : editorState.target}
-          initialTab={editorState.tab}
-          token={session.token}
-          close={() => setEditorState(null)}
-          save={async (body) => {
-            const isNew = editorState.target === "new";
-            const path = isNew
-              ? "/applications"
-              : `/applications/${(editorState.target as Application)._id}`;
-            replace(
-              await api<Application>(
-                path,
-                session.token,
-                isNew ? "POST" : "PATCH",
-                body,
-              ),
-            );
-            setEditorState(null);
-          }}
-          remove={async () => {
-            if (editorState.target === "new") return;
-            await deleteJob(editorState.target);
-            setEditorState(null);
-          }}
-        />
+        <Suspense fallback={null}>
+          <EditorSheet
+            profile={profile}
+            key={
+              editorState.target === "new"
+                ? `new-${editorState.tab}`
+                : `${editorState.target._id}-${editorState.tab}`
+            }
+            open={Boolean(editorState)}
+            job={
+              editorState.target === "new" ? undefined : editorState.target
+            }
+            initialTab={editorState.tab}
+            token={session.token}
+            close={() => setEditorState(null)}
+            save={async (body) => {
+              const isNew = editorState.target === "new";
+              const path = isNew
+                ? "/applications"
+                : `/applications/${(editorState.target as Application)._id}`;
+              replace(
+                await api<Application>(
+                  path,
+                  session.token,
+                  isNew ? "POST" : "PATCH",
+                  body,
+                ),
+              );
+              setEditorState(null);
+            }}
+            remove={async () => {
+              if (editorState.target === "new") return;
+              await deleteJob(editorState.target);
+              setEditorState(null);
+            }}
+          />
+        </Suspense>
       )}
 
       <WorkspaceCommands

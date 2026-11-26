@@ -24,12 +24,14 @@ import {
 } from "@/components/ui/progress";
 import {
   ArrowRight,
-  UserRound,
   BriefcaseBusiness,
+  Check,
+  Circle,
   Lock,
   Mail,
   Moon,
   Sun,
+  UserRound,
 } from "lucide-react";
 import { useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
@@ -293,8 +295,25 @@ export function SignIn({ onSignIn }: { onSignIn: (session: Session) => void }) {
                 </div>
 
                 {register && password && (
-                  <ul className="grid gap-1 text-xs text-muted-foreground" aria-label="Password guidance">
-                    {passwordChecks.map(({ label, met }) => <li key={label} className={met ? "text-emerald-700 dark:text-emerald-400" : ""}>{met ? "✓" : "○"} {label}</li>)}
+                  <ul
+                    className="grid gap-1 text-xs text-muted-foreground"
+                    aria-label="Password guidance"
+                  >
+                    {passwordChecks.map(({ label, met }) => (
+                      <li
+                        key={label}
+                        className={`inline-flex items-center gap-1.5 ${
+                          met ? "text-emerald-700 dark:text-emerald-400" : ""
+                        }`}
+                      >
+                        {met ? (
+                          <Check className="size-3.5 shrink-0" />
+                        ) : (
+                          <Circle className="size-3 shrink-0 opacity-60" />
+                        )}
+                        <span>{label}</span>
+                      </li>
+                    ))}
                   </ul>
                 )}
                 {(form.formState.errors.email || form.formState.errors.password) && (

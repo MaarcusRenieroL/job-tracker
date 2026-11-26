@@ -1,4 +1,4 @@
-import { useState, type Dispatch, type SetStateAction } from "react";
+import type { Dispatch, SetStateAction } from "react";
 import { Check, Copy, CornerDownLeft, Sparkles } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -15,6 +15,7 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty";
 import { TabsContent } from "@/components/ui/tabs";
+import { useCopyFeedback } from "@/hooks/use-copy-feedback";
 import { api } from "../../../lib/api";
 import type {
   Application,
@@ -64,7 +65,7 @@ export function EditorAssessments({
   run: (action: () => Promise<void>) => Promise<void>;
   token: string;
 }) {
-  const [copied, setCopied] = useState(false);
+  const { copied, copyText } = useCopyFeedback();
 
   const canGeneratePrep = Boolean(
     job &&
@@ -72,13 +73,6 @@ export function EditorAssessments({
         job.skills?.length ||
         job.responsibilities?.length),
   );
-
-  async function copyPrep() {
-    if (!prep) return;
-    await navigator.clipboard.writeText(formatPrepText(prep));
-    setCopied(true);
-    window.setTimeout(() => setCopied(false), 1800);
-  }
 
   function applyPrepToRound() {
     if (!prep) return;
@@ -147,7 +141,7 @@ export function EditorAssessments({
                   type="button"
                   variant="outline"
                   size="xs"
-                  onPress={() => void copyPrep()}
+                  onPress={() => void copyText(formatPrepText(prep))}
                 >
                   {copied ? (
                     <>

@@ -1,9 +1,8 @@
+import { fileURLToPath, URL } from "node:url";
+import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
-import tailwindcss from "@tailwindcss/vite";
-import { fileURLToPath, URL } from "node:url";
 
-// https://vite.dev/config/
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   server: {
@@ -16,6 +15,32 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": fileURLToPath(new URL("./src/", import.meta.url)),
+    },
+  },
+  build: {
+    rolldownOptions: {
+      output: {
+        codeSplitting: {
+          groups: [
+            {
+              name: "prosemirror",
+              test: /node_modules[\\/]prosemirror/,
+            },
+            {
+              name: "tiptap",
+              test: /node_modules[\\/](@tiptap|@editorcn)/,
+            },
+            {
+              name: "aria-ui",
+              test: /node_modules[\\/](react-aria|@react-aria|@react-stately|@internationalized|@base-ui)/,
+            },
+            {
+              name: "react-vendor",
+              test: /node_modules[\\/](react|react-dom|scheduler)/,
+            },
+          ],
+        },
+      },
     },
   },
 });

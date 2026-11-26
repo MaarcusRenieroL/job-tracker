@@ -12,7 +12,7 @@ export {
   SidebarGroupLabel,
   SidebarGroupAction,
   SidebarGroupContent,
-} from "./sidebar/layout"
+} from "./sidebar/layout";
 export {
   SidebarMenu,
   SidebarMenuItem,
@@ -23,6 +23,5 @@ export {
   SidebarMenuSub,
   SidebarMenuSubItem,
   SidebarMenuSubButton,
-} from "./sidebar/menu"
-export { SidebarProvider } from "./sidebar/provider"
-export { useSidebar } from "./sidebar/context"
+} from "./sidebar/menu";
+export { SidebarProvider } from "./sidebar/provider";
