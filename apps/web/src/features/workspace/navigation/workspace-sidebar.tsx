@@ -28,6 +28,7 @@ import { formatRelativeDays } from "@/lib/format";
 import {
   Award,
   BarChart3,
+  Bell,
   BriefcaseBusiness,
   CalendarClock,
   ChevronsUpDown,
@@ -37,12 +38,14 @@ import {
   Plus,
   Search,
   Sun,
+  Users,
 } from "lucide-react";
 import { type Application } from "../../../types/application";
+import { buildAttentionItems } from "../../attention/attention-data";
 
 import type { Session } from "../../auth/session";
 
-type PageId = "applications" | "agenda" | "offers" | "analytics";
+type PageId = "applications" | "agenda" | "offers" | "analytics" | "attention" | "contacts";
 export function WorkspaceSidebar({
   page,
   setPage,
@@ -73,6 +76,7 @@ export function WorkspaceSidebar({
   openApplicationById: (id: string) => void;
 }) {
   const { setOpenDrawer } = useSidebar();
+  const attentionCount = buildAttentionItems(jobs).length;
 
   function navigate(action: () => void) {
     setOpenDrawer(false);
@@ -174,6 +178,31 @@ export function WorkspaceSidebar({
                 >
                   <BarChart3 />
                   <span>Analytics</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  isActive={page === "attention"}
+                  tooltip="Attention"
+                  onPress={() => navigate(() => setPage("attention"))}
+                >
+                  <Bell />
+                  <span>Attention</span>
+                </SidebarMenuButton>
+                {attentionCount > 0 && (
+                  <SidebarMenuBadge>{attentionCount}</SidebarMenuBadge>
+                )}
+              </SidebarMenuItem>
+
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  isActive={page === "contacts"}
+                  tooltip="Contacts"
+                  onPress={() => navigate(() => setPage("contacts"))}
+                >
+                  <Users />
+                  <span>Contacts</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </SidebarMenu>

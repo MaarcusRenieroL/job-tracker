@@ -13,16 +13,18 @@ import {
 import {
   Award,
   BarChart3,
+  Bell,
   BriefcaseBusiness,
   CalendarClock,
   Columns3,
   List,
   Plus,
   Sparkles,
+  Users,
 } from "lucide-react";
 import { type Application } from "../../../types/application";
 
-type PageId = "applications" | "agenda" | "offers" | "analytics";
+type PageId = "applications" | "agenda" | "offers" | "analytics" | "attention" | "contacts";
 export function WorkspaceCommands({
   commandOpen,
   setCommandOpen,
@@ -117,6 +119,14 @@ export function WorkspaceCommands({
             <CommandItem id="nav-analytics" textValue="Go to Analytics">
               <BarChart3 className="size-4" />
               <span>Conversion Analytics</span>
+            </CommandItem>
+            <CommandItem id="nav-attention" textValue="Go to Attention">
+              <Bell className="size-4" />
+              <span>Needs Attention</span>
+            </CommandItem>
+            <CommandItem id="nav-contacts" textValue="Go to Contacts">
+              <Users className="size-4" />
+              <span>Recruiter Directory</span>
             </CommandItem>
           </CommandGroup>
 

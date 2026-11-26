@@ -21,6 +21,7 @@ import { ApplicationBoard } from "./applications/application-board";
 import { ApplicationFilters } from "./applications/application-filters";
 import { ApplicationLedger } from "./applications/application-ledger";
 import { ApplicationSummary } from "./applications/application-summary";
+import { ApplicationTransferMenu } from "./applications/application-transfer-menu";
 import {
   filterApplications,
   summarizeApplications,
@@ -40,13 +41,19 @@ const AgendaDesk = lazy(() =>
 const OffersDesk = lazy(() =>
   import("../offers/offers-desk").then((mod) => ({ default: mod.OffersDesk })),
 );
+const AttentionDesk = lazy(() =>
+  import("../attention/attention-desk").then((mod) => ({ default: mod.AttentionDesk })),
+);
+const ContactsDesk = lazy(() =>
+  import("../contacts/contacts-desk").then((mod) => ({ default: mod.ContactsDesk })),
+);
 const EditorSheet = lazy(() =>
   import("../applications/editor/editor-sheet").then((mod) => ({
     default: mod.EditorSheet,
   })),
 );
 
-type PageId = "applications" | "agenda" | "offers" | "analytics";
+type PageId = "applications" | "agenda" | "offers" | "analytics" | "attention" | "contacts";
 
 const PAGE_META: Record<PageId, { title: string; subtitle: string }> = {
   applications: {
@@ -68,6 +75,16 @@ const PAGE_META: Record<PageId, { title: string; subtitle: string }> = {
     title: "Analytics",
     subtitle:
       "Conversion rates, stage velocity, channel performance, and recurring skill gaps.",
+  },
+  attention: {
+    title: "Attention",
+    subtitle:
+      "Follow-ups, deadlines, interviews, assessments, referrals, and stale or ghosted applications.",
+  },
+  contacts: {
+    title: "Contacts",
+    subtitle:
+      "Recruiter and referrer directory aggregated across every application.",
   },
 };
 
@@ -123,7 +140,7 @@ export function Workspace({
     onNewApplication: handleNewApplication,
   });
 
-  const { jobs, agenda, offerRows, error, loading, replace, move, deleteJob } =
+  const { jobs, agenda, offerRows, error, loading, replace, move, deleteJob, reload } =
     useWorkspaceData(session.token, agendaFrom, agendaTo);
 
   const { allTags, visible } = filterApplications(jobs, {
@@ -247,8 +264,27 @@ export function Workspace({
                 onSelectOffer={(id) => openApplicationById(id, "offer")}
               />
             </Suspense>
+          ) : page === "attention" ? (
+            <Suspense fallback={deskFallback}>
+              <AttentionDesk
+                jobs={jobs}
+                onSelectApplication={(id) => openApplicationById(id, "overview")}
+              />
+            </Suspense>
+          ) : page === "contacts" ? (
+            <Suspense fallback={deskFallback}>
+              <ContactsDesk
+                jobs={jobs}
+                onSelectApplication={(id) => openApplicationById(id, "overview")}
+              />
+            </Suspense>
           ) : (
             <>
+              <ApplicationTransferMenu
+                token={session.token}
+                jobs={jobs}
+                onImported={reload}
+              />
               <ApplicationSummary
                 total={jobs.length}
                 {...summary}

@@ -17,6 +17,7 @@ export function useWorkspaceData(token: string, from: string, to: string) {
 
   useEffect(() => {
     let active = true;
+    setLoading(true);
     api<{ applications: Application[] }>("/applications", token)
       .then(({ applications }) => {
         if (active) setJobs(applications);
@@ -36,7 +37,7 @@ export function useWorkspaceData(token: string, from: string, to: string) {
     return () => {
       active = false;
     };
-  }, [token]);
+  }, [token, revision]);
 
   useEffect(() => {
     let active = true;
@@ -127,5 +128,9 @@ export function useWorkspaceData(token: string, from: string, to: string) {
     }
   }
 
-  return { jobs, agenda, offerRows, error, loading, replace, move, deleteJob };
+  function reload() {
+    setRevision((previous) => previous + 1);
+  }
+
+  return { jobs, agenda, offerRows, error, loading, replace, move, deleteJob, reload };
 }
