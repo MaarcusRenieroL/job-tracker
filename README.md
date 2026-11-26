@@ -1,8 +1,8 @@
 # Job Tracker
 
-A local-first React workspace for tracking applications, interview rounds, referrals, coding assessments, offers, and job-search performance. Deterministic resume matching explains which required skills appear in your resume, while an optional local Ollama model adds job-fit explanations, posting extraction, interview prep, and editable outreach drafts.
+A local-first TypeScript microservice workspace for managing a job search end to end: 11-stage application pipeline tracking, deterministic resume skill-coverage scoring, chronological deadline agendas, coding assessments, interview rounds, referrals, multi-currency offer comparison, sectioned PDF resume editing, and optional local Ollama AI workflows.
 
-## Run locally
+## Quick start (run locally)
 
 Install and open Docker Desktop, then run:
 
@@ -10,35 +10,38 @@ Install and open Docker Desktop, then run:
 docker compose up --build
 ```
 
-To enable local AI features (Ollama + `qwen2.5:1.5b`) and/or observability (Prometheus + Jaeger):
+Optional profiles add local AI (Ollama + `qwen2.5:1.5b`) and full observability (Prometheus + Jaeger):
 
 ```sh
-# Core app + local AI
+# Core stack + local Ollama AI
 docker compose --profile ai up --build -d
 docker compose --profile ai logs -f ollama-init
 
-# Core app + local AI + Prometheus & Jaeger
+# Full stack (Core + AI + Prometheus & Jaeger tracing)
 OTEL_EXPORTER_OTLP_TRACES_ENDPOINT=http://jaeger:4318/v1/traces \
   docker compose --profile ai --profile observability up --build -d
 ```
 
-Open [Job Tracker](http://localhost:5173). Create an account, upload or edit your resume in **Profile & Resume**, then use **New application** to import a job URL or paste a description. The first build downloads dependencies and may take several minutes.
+Open [http://localhost:5173](http://localhost:5173) to use the app, or explore the live documentation:
 
-To stop the app, press Ctrl+C and run `docker compose down`. Your account, applications, and pulled Ollama models stay in Docker volumes.
+| Surface | URL | Purpose |
+|---|---|---|
+| **Web Workspace** | [http://localhost:5173](http://localhost:5173) | React + Vite UI (proxies `/auth`, `/applications`, `/profile`, `/docs`, `/guide`) |
+| **Usage & Operations Guide** | [http://localhost:5173/guide](http://localhost:5173/guide) | Walkthrough, curl examples, AI reference, and observability guide |
+| **Tracker Swagger UI** | [http://localhost:5173/docs](http://localhost:5173/docs) | Interactive OpenAPI 3.1 explorer ([`/openapi.json`](http://localhost:5173/openapi.json)) |
+| **Auth Swagger UI** | [http://localhost:5173/auth/docs](http://localhost:5173/auth/docs) | Interactive OpenAPI 3.1 explorer ([`/auth/openapi.json`](http://localhost:5173/auth/openapi.json)) |
+| **Prometheus** | [http://127.0.0.1:9090](http://127.0.0.1:9090) | HTTP & AI metrics (`--profile observability`) |
+| **Jaeger** | [http://127.0.0.1:16686](http://127.0.0.1:16686) | Distributed traces across services (`--profile observability`) |
 
-### Interactive API Docs & Usage Guide
+Stop with `docker compose down`. Account data, applications, and pulled Ollama models persist in Docker volumes.
 
-When the stack is running, open the built-in documentation directly from `http://localhost:5173`:
+### Native Node.js development
 
-- **[How-To-Use & Operations Guide](http://localhost:5173/guide)** — quick-start commands, authentication curl walkthrough, AI endpoint reference, and observability guide.
-- **[Tracker Swagger UI](http://localhost:5173/docs)** — interactive OpenAPI 3.1 explorer ([`/openapi.json`](http://localhost:5173/openapi.json)) with Bearer JWT authorization.
-- **[Auth Swagger UI](http://localhost:5173/auth/docs)** — interactive OpenAPI 3.1 explorer ([`/auth/openapi.json`](http://localhost:5173/auth/openapi.json)) for registration and login.
-
-### Local Node.js Development
-
-For development with Node.js 26 and pnpm 12 installed, run `pnpm install --frozen-lockfile`, start MongoDB with `docker compose up -d mongo`, and generate a local Ed25519 key pair:
+With Node.js 26 and pnpm 12 installed:
 
 ```sh
+pnpm install --frozen-lockfile
+docker compose up -d mongo
 node --input-type=module <<'JS'
 import { generateKeyPairSync } from "node:crypto";
 import { mkdirSync, writeFileSync } from "node:fs";
@@ -52,55 +55,102 @@ writeFileSync(".local/auth-public.pem", publicKey, { flag: "wx" });
 JS
 ```
 
-Start `pnpm --filter @job-tracker/auth dev`, `pnpm --filter @job-tracker/tracker dev`, and `pnpm --dir apps/web dev` in separate terminals. Enable local Git hooks with `pnpm install-hooks`, and run `pnpm run ci` for lint, typecheck, tests, and production builds.
+Run `pnpm --filter @job-tracker/auth dev`, `pnpm --filter @job-tracker/tracker dev`, and `pnpm --dir apps/web dev` in separate terminals. Run `pnpm run ci` to execute lint, typecheck, tests, and production builds across all workspace packages.
 
-## Architecture and data
+---
 
-- **Auth (`services/auth`, port 3001):** Stores users and Argon2id password hashes in `job_tracker_auth.users` with normalized unique emails, sliding-window IP rate limiting (`429` + `Retry-After`), fail-fast Zod env config, and 15-minute Ed25519 JWT issuance.
-- **Tracker (`services/tracker`, port 3002):** Verifies Ed25519 JWTs locally using the public key, isolates every query by `ownerId`, and owns `job_tracker_tracker.applications` and `job_tracker_tracker.profiles`. Stage updates, version checks, and history appends execute as a single atomic MongoDB `findOneAndUpdate`; stale versions return HTTP `409`.
-- **Shared contracts (`packages/application-options`):** Single source of truth for stage/priority/work-model/assessment/interview/referral enums, `clearableApplicationKeys`, Zod validation schemas, and inferred TypeScript API contracts shared by Tracker and Web.
-- **Observability (`packages/observability`):** Pino structured JSON logging (with automatic redaction of `Authorization`, passwords, and tokens), centralized `AppError` / HTTP error handling, security headers (`nosniff`, `DENY`, `no-referrer`), Prometheus HTTP & AI metrics, OpenTelemetry distributed tracing, and graceful `SIGINT`/`SIGTERM` shutdown.
-- **React workspace (`apps/web`):** Connects to Auth and Tracker via Vite's HTTP proxy. Features code-split desks (Applications table & Kanban board with optimistic stage updates, Attention & follow-up alerts, Chronological Agenda, Recruiter/Referrer directory, Multi-currency Offers, Analytics, Activity timeline, CSV/JSON export & bulk import, rich-text slash-command editor) and a **Profile & Sectioned Resume Studio** with side-by-side PDF canvas preview and 7 independent shadcn + React Hook Form + Zod section forms.
+## Architecture & service communication
 
-## Local observability
-
-[Prometheus targets](http://127.0.0.1:9090/targets) scrapes Auth and Tracker. Query `up{job=~"auth|tracker"}`, `sum by (job, status) (rate(http_requests_total[5m]))`, or `ai_requests_total` / `ai_request_duration_seconds` for local LLM metrics.
-
-Generate a distributed trace across both services from inside the Compose network:
-
-```sh
-docker compose exec -T tracker node --input-type=module -e \
-  'const r = await fetch("http://127.0.0.1:3002/ready/dependencies"); console.log(r.status, await r.text())'
-docker compose logs --tail=20 tracker auth
+```mermaid
+flowchart LR
+  Web["apps/web (React + Vite :5173)"] -->|"/auth/*"| Auth["services/auth (Hono :3001)"]
+  Web -->|"/applications/*, /profile/*, /docs"| Tracker["services/tracker (Hono :3002)"]
+  Auth --> AuthDB[("MongoDB: job_tracker_auth")]
+  Tracker --> TrackerDB[("MongoDB: job_tracker_tracker")]
+  Tracker -.->|"Ed25519 public key (local JWT verify)"| Keys[("Shared signing-keys volume")]
+  Auth -.->|"Ed25519 private key (JWT sign)"| Keys
+  Tracker -->|"GET /ready (W3C traceparent)"| Auth
+  Tracker -->|"POST /api/chat (optional)"| Ollama["Ollama (:11434)"]
+  Auth & Tracker -->|"/metrics"| Prom["Prometheus (:9090)"]
+  Auth & Tracker -->|"OTLP HTTP"| Jaeger["Jaeger (:16686)"]
 ```
 
-In [Jaeger](http://127.0.0.1:16686), select `tracker` to inspect incoming HTTP spans, outbound Auth readiness spans, and `ollama.*` AI client spans correlated with the Pino JSON logs (`traceId` / `spanId`).
+### Service boundaries & communication
+- **Auth Service (`services/auth`, port `3001`):** Owns identity, password hashing (Argon2id), and short-lived Ed25519 JWT issuance (`15m`, `iss: job-tracker-auth`, `aud: job-tracker-api`).
+- **Tracker Service (`services/tracker`, port `3002`):** Owns user profiles, job applications, deterministic resume matching, posting import, agenda/offer synthesis, and local Ollama AI workflows.
+- **Stateless trust boundary:** A dedicated Compose `keys` init container generates an Ed25519 key pair into a shared read-only volume. Auth signs JWTs with the private key; Tracker verifies them locally with the public key—eliminating synchronous auth round-trips on every request while preserving strict service isolation.
+- **Cross-service HTTP & tracing:** Tracker exposes `GET /ready/dependencies`, calling Auth's `GET /ready` with bounded timeouts and W3C `traceparent` header propagation so Jaeger displays the full multi-service trace.
+- **Shared workspace packages:**
+  - `packages/application-options`: Single source of truth for enums, `clearableApplicationKeys`, Zod schemas, and TypeScript DTO contracts shared by `services/tracker` and `apps/web`.
+  - `packages/observability`: Shared Pino logger, centralized `AppError` / Hono `onError` middleware, security headers, Swagger/OpenAPI registration, Prometheus metrics, OpenTelemetry tracing, and `SIGINT`/`SIGTERM` graceful shutdown.
 
-## Resume coverage and local AI features
+---
 
-Resume coverage awards one point for a strong match, half a point for a partial match, and zero for a missing skill. The score is the weighted share of required skills and stays deterministic and reproducible. Location and seniority signals look for explicit resume text and stay outside the score.
+## Database design (MongoDB)
 
-With the `ai` profile active, Tracker supports five editorial AI workflows over `OLLAMA_BASE_URL` (default `http://ollama:11434` in Compose, `http://127.0.0.1:11434` locally):
+Each service owns a separate MongoDB database to enforce strict bounded-context data isolation:
 
-- **AI job-fit explanation** (`POST /applications/:id/match/explain`): summarizes strengths, resume gaps, and interview prep priorities with resume/posting evidence while keeping the deterministic percentage score unchanged.
-- **Job description extraction** (`POST /applications/extract`): extracts editable suggestions for required skills, key responsibilities, and seniority from a pasted posting before applying them to the form.
-- **Referral draft** (`POST /applications/:id/referrals/:referralId/draft`): drafts a concise outreach message for a saved referral contact.
-- **Interview prep** (`POST /applications/:id/interview-prep`): generates role-specific study topics and practice questions from the saved posting and resume skill gaps.
-- **Cover-letter & follow-up drafts** (`POST /applications/:id/cover-letter/draft`, `POST /applications/:id/follow-up/draft`): generates editable drafts from saved facts, leaving the user in full control of editing and sending.
+### 1. `job_tracker_auth.users` (owned by Auth)
+- **Document fields:** `_id`, `email` (trimmed & lowercased), `name` (optional), `passwordHash` (Argon2id), `createdAt`.
+- **Indexes:** `{ email: 1 }` (`unique: true`).
 
-Set `OLLAMA_MODEL` before starting Compose to change the model. The core app also runs without the `ai` profile.
+### 2. `job_tracker_tracker.profiles` (owned by Tracker)
+- **Document fields:** `_id`, `ownerId` (JWT `sub`), `name`, `resumeText`, `resumeHtml` (optional), `resumeVersions` (bounded rolling array via `$slice: -20` storing `{ id, resumeText, resumeHtml, createdAt }`).
+- **Indexes:** `{ ownerId: 1 }` (`unique: true`).
 
-## Tracker API reference
+### 3. `job_tracker_tracker.applications` (owned by Tracker)
+- **Document fields:** `_id`, `ownerId`, `company`, `role`, `seniority`, `stage` (11 pipeline stages), `priority`, `tags` (deduplicated), `skills`, `responsibilities`, `location`, `workModel`, `salaryRange`, `jobUrl`, `description` (+ `descriptionHtml`), `notes` (+ `notesHtml`), `resumeText` (+ `resumeTextHtml`), `coverLetter` (+ `coverLetterHtml`), `appliedAt`, `deadline`, `followUp`, `rejectionReason`, `version` (monotonic integer), `createdAt`, `updatedAt`.
+- **Embedded subdocuments:** `assessments[]`, `interviews[]`, `referrals[]`, `offer`, and `history[]` (`{ from?, to, at }`). Embedding keeps each application self-contained for atomic single-document reads and writes without cross-collection joins.
+- **Indexes:** `{ ownerId: 1, updatedAt: -1 }`.
+- **Optimistic concurrency:** Every `PATCH /applications/:id` filters by `{ ownerId, _id, version }` and executes `$set`, `$inc: { version: 1 }`, `$unset`, and `$push: { history }` atomically in one `findOneAndUpdate`. Competing/stale writes return HTTP `409 CONFLICT`.
 
-All `/applications` and `/profile` routes require a Bearer JWT from `POST /auth/login`. Full request/response schemas are available interactively at [`/docs`](http://localhost:5173/docs).
+---
 
-- **Pipeline:** `PATCH /applications/:id` requires `{ "version": 1, ... }`. A stale version returns HTTP `409`.
-- **Priority, tags, seniority, and responsibilities:** Create or patch with `priority` (`High`, `Medium`, `Low`), `tags` (up to 25 deduplicated strings), `seniority`, and `responsibilities`. List accepts combinable `stage`, `priority`, and `tag` query parameters.
-- **Assessments:** Create or patch with an `assessments` array (`id`, `title`, `type`, `status`, optional `deadline`, `submittedAt`, `repoUrl`, `outcome`, `notes`).
-- **Agenda:** `GET /applications/agenda?from=2026-11-26&to=2026-12-10` returns chronological events across `application-deadline`, `follow-up`, `interview`, `assessment`, `referral-follow-up`, and `offer-deadline`.
-- **Offers:** `GET /applications/offers` returns all recorded offers (`base`, `bonus`, `equity`, 3-letter `currency`, optional `deadline`, `notes`) in their original currencies.
-- **Import a job posting:** `POST /applications/import` extracts available details from a `JobPosting` JSON-LD record or public LinkedIn job page into empty fields for review before saving.
+## Security & engineering best practices
 
-## AI assistance
+- **Authentication & authorization:** Argon2id password hashing, 15-minute Ed25519 JWTs validating `alg`, `iss`, `aud`, `sub`, and `exp`, and mandatory `ownerId` scoping on every Tracker read/write/delete.
+- **Abuse & injection protections:**
+  - Sliding-window IP rate limiter (`429` + `Retry-After`) on `/auth/register` and `/auth/login`.
+  - Strict request body size limits (`16 KB` on Auth, `256 KB` on Profile, `1 MB` on Applications).
+  - Strict Zod input validation (`z.strictObject`) rejecting unknown keys (such as client-supplied `ownerId`).
+  - SSRF protection on `POST /applications/import` rejecting non-HTTP(S), credentialed URLs, and loopback/private/link-local IPs via `ipaddr.js`.
+  - Security headers on all responses (`X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy: no-referrer`, `Cache-Control: no-store`).
+  - Prompt-injection boundaries on all local Ollama calls (all user/posting/resume content passed strictly as JSON data; structured outputs validated via Zod; never auto-sends messages).
+- **Code quality & testability:** Pure dependency-injected Hono app factories (`createAuthApp`, `createTrackerApp`), fail-fast Zod env configuration (`config.ts`), centralized `AppError` codes, graceful `SIGINT`/`SIGTERM` shutdown, Rolldown code-split frontend (`163 kB` entry JS), and hermetic unit + HTTP route integration tests (`pnpm run ci`).
 
-Codex assisted with planning, implementation, testing, and review. Antigravity built the five editorial AI features, Pino/Swagger/OpenAPI docs, sectioned PDF Profile Studio, and full-stack refactoring. OpenCode added the attention desk, recruiter directory, timeline, data transfer, resume-version linking, and rich-text slash commands. Impeccable supplied frontend design guidance. Runtime AI features use the local Ollama model (`docker compose --profile ai up --build -d`).
+---
+
+## Observability (logging, traces & metrics)
+
+- **Structured logging (Pino):** Both services emit ISO-timestamped JSON logs with `service`, `requestId`, `traceId`, `spanId`, route, status, and duration, with automatic `[REDACTED]` scrubbing of `Authorization` headers, passwords, and tokens (`LOG_LEVEL` configurable).
+- **Metrics (Prometheus):** `/metrics` on Auth and Tracker exposes `http_requests_total`, `http_request_duration_seconds`, `ai_requests_total{operation,status}`, and `ai_request_duration_seconds{operation}`.
+- **Distributed tracing (OpenTelemetry + Jaeger):** Incoming HTTP server spans, outbound `tracker -> auth` readiness spans, and `ollama.<operation>` AI client spans propagate W3C trace context and export over OTLP HTTP to Jaeger.
+
+```sh
+# Trigger a cross-service distributed trace
+docker compose exec -T tracker node --input-type=module -e \
+  'const r = await fetch("http://127.0.0.1:3002/ready/dependencies"); console.log(r.status, await r.text())'
+docker compose logs --tail=10 tracker auth
+```
+
+---
+
+## Local AI workflows (optional Ollama profile)
+
+Resume matching (`GET /applications/:id/match`) stays **100% deterministic and reproducible** (`strong = 1`, `partial = 0.5`, `missing = 0`). With `--profile ai`, Tracker adds five editorial workflows over `OLLAMA_BASE_URL` (with OpenTelemetry spans and transient retry/backoff):
+
+1. **AI job-fit explanation** (`POST /applications/:id/match/explain`) — evidence-backed strengths, resume gaps, and prep priorities alongside the unchanged deterministic score.
+2. **Job description extraction** (`POST /applications/extract`) — editable suggestions for required skills, responsibilities, and seniority.
+3. **Referral draft** (`POST /applications/:id/referrals/:referralId/draft`) — concise editable referral message for a saved contact.
+4. **Interview prep** (`POST /applications/:id/interview-prep`) — role-specific study topics and practice questions from saved posting details and resume gaps.
+5. **Cover-letter & follow-up drafts** (`POST /applications/:id/cover-letter/draft`, `POST /applications/:id/follow-up/draft`) — editable drafts strictly from saved facts, leaving the user in full control of sending.
+
+---
+
+## AI tools & models used
+
+- **Codex (OpenAI):** Initial architecture planning, Auth/Tracker scaffolding, deterministic resume matcher, posting import, observability setup, and testing.
+- **Antigravity (Google DeepMind):** All 5 Ollama AI workflows, shared `@job-tracker/application-options` contracts, DI app factories & graceful shutdown, Pino logging, OpenAPI 3.1 Swagger UI & `/guide`, HTTP route integration tests, sectioned PDF Profile Studio, and dropdown rich-text editor redesign.
+- **OpenCode:** Attention/follow-up desk, recruiter directory, full activity timeline, CSV/JSON export & bulk import, resume-version linking, and custom time picker.
+- **Impeccable:** Frontend design system guidance (`apps/web/DESIGN.md`).
+- **Runtime local model:** Ollama (`qwen2.5:1.5b`, optional via `--profile ai`).
