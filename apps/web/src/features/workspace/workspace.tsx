@@ -62,7 +62,6 @@ import {
   Plus,
   RotateCcw,
   Search,
-  Tag,
   Trash2,
 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
@@ -85,6 +84,7 @@ import { useTheme } from "../../hooks/use-theme";
 import { useWorkspaceData } from "./use-workspace-data";
 import { WorkspaceCommands } from "./workspace-commands";
 import { WorkspaceSidebar } from "./workspace-sidebar";
+import { TagFilter } from "./tag-filter";
 const ALL_FILTER = "__all__";
 type PageId = "applications" | "agenda" | "offers" | "analytics";
 
@@ -104,7 +104,7 @@ export function Workspace({
   const [query, setQuery] = useState("");
   const [stage, setStage] = useState("");
   const [priorityFilter, setPriorityFilter] = useState<Priority | "">("");
-  const [tagFilter, setTagFilter] = useState("");
+  const [tagFilter, setTagFilter] = useState<string[]>([]);
   const [agendaFrom, setAgendaFrom] = useState(() =>
     new Date().toISOString().slice(0, 10),
   );
@@ -173,10 +173,8 @@ export function Workspace({
     (job) =>
       (!stage || stage === job.stage) &&
       (!priorityFilter || job.priority === priorityFilter) &&
-      (!tagFilter ||
-        (job.tags ?? []).some(
-          (t) => t.toLowerCase() === tagFilter.toLowerCase(),
-        )) &&
+      (!tagFilter.length ||
+        tagFilter.some((selected) => (job.tags ?? []).some((tag) => tag.toLowerCase() === selected.toLowerCase()))) &&
       [
         job.company,
         job.role,
@@ -221,7 +219,7 @@ export function Workspace({
     (job) => job.priority === "High",
   ).length;
 
-  const hasFilters = Boolean(stage || priorityFilter || tagFilter || query);
+  const hasFilters = Boolean(stage || priorityFilter || tagFilter.length || query);
 
   const pageMeta: Record<PageId, { title: string; subtitle: string }> = {
     applications: {
@@ -479,7 +477,7 @@ export function Workspace({
                       onPress={() => {
                         setStage("");
                         setPriorityFilter("");
-                        setTagFilter("");
+                        setTagFilter([]);
                         setQuery("");
                       }}
                     >
@@ -528,33 +526,7 @@ export function Workspace({
                 </div>
 
                 {allTags.length > 0 && (
-                  <div
-                    aria-label="Filter by tag"
-                    className="flex flex-wrap items-center gap-1.5"
-                  >
-                    <span className="mr-1 inline-flex items-center gap-1 text-xs font-medium text-muted-foreground">
-                      <Tag className="size-3" /> Tags
-                    </span>
-                    {allTags.map((tag) => {
-                      const isActive =
-                        tagFilter.toLowerCase() === tag.toLowerCase();
-                      return (
-                        <button
-                          key={tag}
-                          type="button"
-                          aria-pressed={isActive}
-                          onClick={() => setTagFilter(isActive ? "" : tag)}
-                          className={
-                            isActive
-                              ? "inline-flex h-5.5 items-center rounded-md border border-ring/60 bg-ring/12 px-2 text-xs font-medium text-foreground transition-colors"
-                              : "inline-flex h-5.5 items-center rounded-md border border-border bg-card px-2 text-xs text-muted-foreground transition-colors hover:border-foreground/25 hover:text-foreground"
-                          }
-                        >
-                          #{tag}
-                        </button>
-                      );
-                    })}
-                  </div>
+                  <TagFilter tags={allTags} selected={tagFilter} onChange={setTagFilter} />
                 )}
               </div>
 
@@ -585,7 +557,7 @@ export function Workspace({
                             onPress={() => {
                               setStage("");
                               setPriorityFilter("");
-                              setTagFilter("");
+                              setTagFilter([]);
                               setQuery("");
                             }}
                           >
@@ -790,7 +762,7 @@ export function Workspace({
                     </div>
 
                     <div className="hidden md:block">
-                      <Table aria-label="Job applications">
+                      <Table aria-label="Job applications" onRowAction={(key) => openApplicationById(String(key))}>
                         <TableHeader className="bg-muted/40">
                           <TableHead
                             isRowHeader
@@ -826,7 +798,7 @@ export function Workspace({
                             ).filter((r) => r.result === "Scheduled").length;
 
                             return (
-                              <TableRow key={job._id} id={job._id}>
+                              <TableRow key={job._id} id={job._id} className="cursor-pointer">
                                 <TableCell className="px-3.5 py-3">
                                   <div className="flex items-center gap-2.5">
                                     <CompanyAvatar
