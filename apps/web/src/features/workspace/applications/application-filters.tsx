@@ -15,7 +15,7 @@ import {
   RotateCcw,
   Search,
 } from "lucide-react";
-import { priorities, stages, type Priority } from "../../types/application";
+import { priorities, stages, type Priority } from "../../../types/application";
 import { TagFilter } from "./tag-filter";
 
 const ALL_FILTER = "__all__";

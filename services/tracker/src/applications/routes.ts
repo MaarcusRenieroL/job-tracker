@@ -7,14 +7,14 @@ import {
   handleGet,
   handleMatch,
   handleReferralDraft,
-} from "./detail-handlers.js";
-import { handleCreate, handleImport, handleUpdate } from "./handlers.js";
+} from "./handlers/details.js";
+import { handleCreate, handleImport, handleUpdate } from "./handlers/write-and-import.js";
 import {
   handleAgenda,
   handleList,
   handleMissingSkills,
   handleOffers,
-} from "./query-handlers.js";
+} from "./handlers/queries.js";
 import type { Application } from "./schema.js";
 
 export function createApplicationRoutes(applications: Collection<Application>) {

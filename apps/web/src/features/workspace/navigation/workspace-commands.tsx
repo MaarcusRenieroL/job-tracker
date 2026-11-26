@@ -20,7 +20,7 @@ import {
   Plus,
   Sparkles,
 } from "lucide-react";
-import { type Application } from "../../types/application";
+import { type Application } from "../../../types/application";
 
 type PageId = "applications" | "agenda" | "offers" | "analytics";
 export function WorkspaceCommands({

@@ -4,8 +4,8 @@ import { Button } from "@/components/ui/button";
 import { CardFrame, CardFrameHeader, CardFramePanel, CardFrameTitle } from "@/components/ui/card-frame";
 import { TabsContent } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
-import { api } from "../../lib/api";
-import type { Application, Entry } from "../../types/application";
+import { api } from "../../../lib/api";
+import type { Application, Entry } from "../../../types/application";
 import { EntryCollection } from "./editor-controls";
 import { referralFields } from "./editor-fields";
 

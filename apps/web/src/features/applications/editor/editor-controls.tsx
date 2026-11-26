@@ -26,7 +26,7 @@ import { DatePicker } from "@/components/ui/date-picker";
 import { DateTimePicker } from "@/components/ui/date-time-picker";
 import { Textarea } from "@/components/ui/textarea";
 import { Plus, Trash2 } from "lucide-react";
-import { type Entry, type Stage } from "../../types/application";
+import { type Entry, type Stage } from "../../../types/application";
 
 import { NONE_KEY, type Field } from "./editor-fields";
 

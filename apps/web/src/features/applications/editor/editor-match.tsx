@@ -20,8 +20,8 @@ import {
 } from "@/components/ui/progress";
 import { TabsContent } from "@/components/ui/tabs";
 import { CheckCircle2, FileCheck2 } from "lucide-react";
-import { api } from "../../lib/api";
-import { type Application, type Match } from "../../types/application";
+import { api } from "../../../lib/api";
+import { type Application, type Match } from "../../../types/application";
 
 export function EditorMatch({
   job,

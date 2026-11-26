@@ -11,7 +11,7 @@ import {
 import { formatCurrency, formatRelativeDays } from "@/lib/format";
 import { ExternalLink } from "lucide-react";
 import { type Application, type Stage } from "@/types/application";
-import type { EditorTab } from "../applications/editor";
+import type { EditorTab } from "../../applications/editor/editor-sheet";
 import {
   ApplicationActions,
   ApplicationStagePicker,

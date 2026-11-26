@@ -1,4 +1,4 @@
-import type { AgendaEvent } from "../../types/application";
+import type { AgendaEvent } from "../../../types/application";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -38,9 +38,9 @@ import {
   Search,
   Sun,
 } from "lucide-react";
-import { type Application } from "../../types/application";
+import { type Application } from "../../../types/application";
 
-import type { Session } from "../auth/session";
+import type { Session } from "../../auth/session";
 
 type PageId = "applications" | "agenda" | "offers" | "analytics";
 export function WorkspaceSidebar({

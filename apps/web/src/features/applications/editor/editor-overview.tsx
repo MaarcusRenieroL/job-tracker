@@ -4,9 +4,9 @@ import { CardFrame, CardFrameHeader, CardFramePanel, CardFrameTitle } from "@/co
 import { TabsContent } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { api } from "../../lib/api";
-import type { Application } from "../../types/application";
-import { analyzeDescription } from "./text-analysis";
+import { api } from "../../../lib/api";
+import type { Application } from "../../../types/application";
+import { analyzeDescription } from "../text-analysis";
 import { FieldGrid } from "./editor-controls";
 import { applicationFields, postingFields } from "./editor-fields";
 

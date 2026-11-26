@@ -23,7 +23,7 @@ import {
   MoreHorizontal,
   Trash2,
 } from "lucide-react";
-import type { EditorTab } from "../applications/editor";
+import type { EditorTab } from "../../applications/editor/editor-sheet";
 
 export function ApplicationActions({
   job,

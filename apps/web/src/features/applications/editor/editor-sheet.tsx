@@ -1,4 +1,4 @@
-import type { Profile } from "../onboarding/profile";
+import type { Profile } from "../../onboarding/profile";
 import { EditorHistory } from "./editor-history";
 import {
   CompanyAvatar,
@@ -31,7 +31,7 @@ import type {
   Match,
   Priority,
   Stage,
-} from "../../types/application";
+} from "../../../types/application";
 import { EditorMatch } from "./editor-match";
 import { EditorAssessments } from "./editor-assessments";
 import { EditorOffer } from "./editor-offer";

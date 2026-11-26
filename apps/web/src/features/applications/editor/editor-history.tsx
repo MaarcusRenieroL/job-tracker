@@ -6,7 +6,7 @@ import {
   CardFrameTitle,
 } from "@/components/ui/card-frame";
 import { TabsContent } from "@/components/ui/tabs";
-import type { Application } from "../../types/application";
+import type { Application } from "../../../types/application";
 
 export function EditorHistory({ job }: { job: Application }) {
   return (

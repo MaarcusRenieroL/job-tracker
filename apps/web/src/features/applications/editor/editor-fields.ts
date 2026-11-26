@@ -3,7 +3,7 @@ import {
   assessmentTypes,
   priorities,
   stages,
-} from "../../types/application";
+} from "../../../types/application";
 
 export type Field = {
   name: string;

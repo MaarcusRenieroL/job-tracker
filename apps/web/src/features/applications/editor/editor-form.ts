@@ -1,4 +1,4 @@
-import type { Application, Entry } from "../../types/application";
+import type { Application, Entry } from "../../../types/application";
 import { applicationFields, postingFields } from "./editor-fields";
 
 const clearableKeys = [

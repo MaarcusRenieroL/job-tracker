@@ -14,25 +14,25 @@ import { BriefcaseBusiness, Plus } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { Analytics } from "../analytics/analytics";
 import { api } from "../../lib/api";
-import { EditorSheet, type EditorTab } from "../applications/editor";
+import { EditorSheet, type EditorTab } from "../applications/editor/editor-sheet";
 import { type Application, type Priority } from "../../types/application";
 
 import { AgendaDesk } from "../agenda/agenda-desk";
-import { InsetHeaderBar } from "./inset-header-bar";
+import { InsetHeaderBar } from "./navigation/inset-header-bar";
 import { OffersDesk } from "../offers/offers-desk";
 import type { Session } from "../auth/session";
 import { useTheme } from "../../hooks/use-theme";
 import { useWorkspaceData } from "./use-workspace-data";
-import { WorkspaceCommands } from "./workspace-commands";
-import { WorkspaceSidebar } from "./workspace-sidebar";
-import { ApplicationFilters } from "./application-filters";
-import { ApplicationBoard } from "./application-board";
-import { ApplicationLedger } from "./application-ledger";
-import { ApplicationSummary } from "./application-summary";
+import { WorkspaceCommands } from "./navigation/workspace-commands";
+import { WorkspaceSidebar } from "./navigation/workspace-sidebar";
+import { ApplicationFilters } from "./applications/application-filters";
+import { ApplicationBoard } from "./applications/application-board";
+import { ApplicationLedger } from "./applications/application-ledger";
+import { ApplicationSummary } from "./applications/application-summary";
 import {
   filterApplications,
   summarizeApplications,
-} from "./workspace-application-data";
+} from "./applications/workspace-application-data";
 
 type PageId = "applications" | "agenda" | "offers" | "analytics";
 

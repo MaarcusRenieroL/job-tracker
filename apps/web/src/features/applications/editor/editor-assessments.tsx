@@ -1,6 +1,6 @@
 import type { Dispatch, SetStateAction } from "react";
 import { TabsContent } from "@/components/ui/tabs";
-import type { Entry } from "../../types/application";
+import type { Entry } from "../../../types/application";
 import { EntryCollection } from "./editor-controls";
 import { assessmentFields, interviewFields } from "./editor-fields";
 

@@ -2,7 +2,7 @@ import { CompanyAvatar, PriorityBadge } from "@/components/status-badges";
 import { Badge } from "@/components/ui/badge";
 import { formatCurrency } from "@/lib/format";
 import { type Application, type Stage } from "@/types/application";
-import type { EditorTab } from "../applications/editor";
+import type { EditorTab } from "../../applications/editor/editor-sheet";
 import {
   ApplicationActions,
   ApplicationStagePicker,

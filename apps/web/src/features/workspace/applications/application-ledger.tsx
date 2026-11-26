@@ -9,7 +9,7 @@ import {
   CardFrameTitle,
 } from "@/components/ui/card-frame";
 import type { Application, Stage } from "@/types/application";
-import type { EditorTab } from "../applications/editor";
+import type { EditorTab } from "../../applications/editor/editor-sheet";
 import { ApplicationCards } from "./application-cards";
 import { ApplicationTable } from "./application-table";
 
