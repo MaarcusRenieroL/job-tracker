@@ -22,6 +22,7 @@ export function EditorOverview({
   job,
   values,
   setValues,
+  errors,
   pending,
   run,
   token,
@@ -30,6 +31,7 @@ export function EditorOverview({
   job?: Application;
   values: Record<string, string>;
   setValues: Dispatch<SetStateAction<Record<string, string>>>;
+  errors?: Record<string, string>;
   pending: boolean;
   run: (action: () => Promise<void>) => Promise<void>;
   token: string;
@@ -69,6 +71,7 @@ export function EditorOverview({
           <FieldGrid
             fields={detailPostingFields}
             values={values}
+            errors={errors}
             change={change}
             idPrefix="posting"
           />
@@ -83,6 +86,7 @@ export function EditorOverview({
           <FieldGrid
             fields={applicationFields}
             values={values}
+            errors={errors}
             change={change}
             idPrefix="application"
             resumeVersions={resumeVersions}

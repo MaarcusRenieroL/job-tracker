@@ -59,6 +59,7 @@ export function OutreachDraftsCard({
     formState: { errors },
   } = useForm<FollowUpOptionsForm>({
     resolver: zodResolver(followUpOptionsSchema),
+    mode: "onChange",
     defaultValues: { recipient: "", note: "" },
   });
 

@@ -69,14 +69,19 @@ export function EditorSheet({
     handleSubmit,
     values,
     setValues,
+    valueErrors,
     assessments,
     setAssessments,
+    assessmentErrors,
     referrals,
     setReferrals,
+    referralErrors,
     interviews,
     setInterviews,
+    interviewErrors,
     compensation,
     setCompensation,
+    compensationErrors,
   } = useEditorForm(job, profile);
   const [match, setMatch] = useState<Match>();
   const [explanation, setExplanation] = useState<FitExplanation>();
@@ -246,14 +251,25 @@ export function EditorSheet({
           </div>
 
           <div className="min-h-0 flex-1 overflow-y-auto px-6 py-5">
-            <EditorOverview job={job} values={values} setValues={setValues} pending={pending} run={run} token={token} resumeVersions={profile.resumeVersions} />
+            <EditorOverview
+              job={job}
+              values={values}
+              setValues={setValues}
+              errors={valueErrors}
+              pending={pending}
+              run={run}
+              token={token}
+              resumeVersions={profile.resumeVersions}
+            />
 
             <EditorAssessments
               job={job}
               assessments={assessments}
               setAssessments={setAssessments}
+              assessmentErrors={assessmentErrors}
               interviews={interviews}
               setInterviews={setInterviews}
+              interviewErrors={interviewErrors}
               prep={prep}
               setPrep={setPrep}
               pending={pending}
@@ -261,9 +277,23 @@ export function EditorSheet({
               token={token}
             />
 
-            <EditorReferrals job={job} referrals={referrals} setReferrals={setReferrals} draft={draft} setDraft={setDraft} pending={pending} run={run} token={token} />
+            <EditorReferrals
+              job={job}
+              referrals={referrals}
+              setReferrals={setReferrals}
+              referralErrors={referralErrors}
+              draft={draft}
+              setDraft={setDraft}
+              pending={pending}
+              run={run}
+              token={token}
+            />
 
-            <EditorOffer compensation={compensation} setCompensation={setCompensation} />
+            <EditorOffer
+              compensation={compensation}
+              setCompensation={setCompensation}
+              errors={compensationErrors}
+            />
 
             {job && (
               <EditorMatch

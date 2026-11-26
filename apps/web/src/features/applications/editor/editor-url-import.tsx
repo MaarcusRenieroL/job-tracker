@@ -19,7 +19,9 @@ const importUrlSchema = z.object({
     .trim()
     .min(1, "Enter a job posting URL.")
     .pipe(
-      z.url({ protocol: /^https?$/ }).max(2048, "URL is too long."),
+      z
+        .url({ protocol: /^https?$/, error: "Enter a valid HTTP or HTTPS URL." })
+        .max(2048, "URL is too long."),
     ),
 });
 
@@ -43,6 +45,7 @@ export function UrlImportCard({
     formState: { errors },
   } = useForm<ImportUrlForm>({
     resolver: zodResolver(importUrlSchema),
+    mode: "onChange",
     defaultValues: { url: "" },
   });
 

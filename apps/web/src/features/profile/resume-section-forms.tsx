@@ -78,6 +78,7 @@ export function BasicsSectionForm({
     formState: { errors, isSubmitting },
   } = useForm<BasicsSection>({
     resolver: zodResolver(basicsSectionSchema),
+    mode: "onChange",
     defaultValues,
   });
 
@@ -192,6 +193,7 @@ export function SummarySectionForm({
     formState: { errors, isSubmitting },
   } = useForm<SummarySection>({
     resolver: zodResolver(summarySectionSchema),
+    mode: "onChange",
     defaultValues,
   });
 
@@ -245,6 +247,7 @@ export function SkillsSectionForm({
     formState: { errors, isSubmitting },
   } = useForm<SkillsSection>({
     resolver: zodResolver(skillsSectionSchema),
+    mode: "onChange",
     defaultValues,
   });
 
@@ -299,6 +302,7 @@ export function ExperienceSectionForm({
     formState: { errors, isSubmitting },
   } = useForm<ExperienceSection>({
     resolver: zodResolver(experienceSectionSchema),
+    mode: "onChange",
     defaultValues,
   });
 
@@ -470,6 +474,7 @@ export function ProjectsSectionForm({
     formState: { errors, isSubmitting },
   } = useForm<ProjectsSection>({
     resolver: zodResolver(projectsSectionSchema),
+    mode: "onChange",
     defaultValues,
   });
 
@@ -621,6 +626,7 @@ export function EducationSectionForm({
     formState: { errors, isSubmitting },
   } = useForm<EducationSection>({
     resolver: zodResolver(educationSectionSchema),
+    mode: "onChange",
     defaultValues,
   });
 
@@ -773,6 +779,7 @@ export function CertificationsSectionForm({
     formState: { errors, isSubmitting },
   } = useForm<CertificationsSection>({
     resolver: zodResolver(certificationsSectionSchema),
+    mode: "onChange",
     defaultValues,
   });
 

@@ -6,7 +6,15 @@ import { FieldGrid } from "./editor-controls";
 import { editorFieldValues } from "./editor-form";
 import { offerFields } from "./editor-fields";
 
-export function EditorOffer({ compensation, setCompensation }: { compensation: Record<string, string>; setCompensation: Dispatch<SetStateAction<Record<string, string>>> }) {
+export function EditorOffer({
+  compensation,
+  setCompensation,
+  errors,
+}: {
+  compensation: Record<string, string>;
+  setCompensation: Dispatch<SetStateAction<Record<string, string>>>;
+  errors?: Record<string, string>;
+}) {
   const liveOfferTotal = (Number(compensation.base) || 0) + (Number(compensation.bonus) || 0) + (Number(compensation.equity) || 0);
   return (
             <TabsContent id="offer" className="flex flex-col gap-5">
@@ -42,6 +50,7 @@ export function EditorOffer({ compensation, setCompensation }: { compensation: R
                   <FieldGrid
                     fields={offerFields}
                     values={compensation}
+                    errors={errors}
                     change={(key, value, html) =>
                       setCompensation((previous) => ({
                         ...previous,

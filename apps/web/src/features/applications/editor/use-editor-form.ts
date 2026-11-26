@@ -52,57 +52,106 @@ const interviewEntrySchema = z
 
 const compensationSchema = z
   .record(z.string(), z.string())
-  .refine(
-    (offer) => {
-      const hasAnyValue = Boolean(
-        offer.base?.trim() ||
-          offer.bonus?.trim() ||
-          offer.equity?.trim() ||
-          offer.deadline?.trim() ||
-          offer.notes?.trim(),
-      );
-      if (!hasAnyValue && !offer.currency?.trim()) return true;
-      return /^[A-Z]{3}$/i.test(offer.currency?.trim() ?? "");
-    },
-    "Enter a 3-letter ISO currency code (e.g. USD, INR, EUR) when recording an offer.",
-  )
-  .refine(
-    (offer) =>
-      ["base", "bonus", "equity"].every((key) => {
-        const raw = offer[key]?.trim();
-        if (!raw) return true;
-        const parsed = Number(raw);
-        return Number.isFinite(parsed) && parsed >= 0;
-      }),
-    "Offer base, bonus, and equity must be non-negative numbers.",
-  );
+  .superRefine((offer, ctx) => {
+    const hasAnyValue = Boolean(
+      offer.base?.trim() ||
+        offer.bonus?.trim() ||
+        offer.equity?.trim() ||
+        offer.deadline?.trim() ||
+        offer.notes?.trim(),
+    );
+    if ((hasAnyValue || offer.currency?.trim()) && !/^[A-Z]{3}$/i.test(offer.currency?.trim() ?? "")) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["currency"],
+        message: "Enter a 3-letter ISO currency code (e.g. USD, INR, EUR).",
+      });
+    }
+    for (const key of ["base", "bonus", "equity"] as const) {
+      const raw = offer[key]?.trim();
+      if (!raw) continue;
+      const parsed = Number(raw);
+      if (!Number.isFinite(parsed) || parsed < 0) {
+        ctx.addIssue({
+          code: "custom",
+          path: [key],
+          message: "Must be a non-negative number.",
+        });
+      }
+    }
+  });
 
 const editorSchema = z.object({
   values: z
     .record(z.string(), z.string())
-    .refine(
-      ({ company, role }) => Boolean(company?.trim() && role?.trim()),
-      "Enter a company and job title.",
-    )
-    .refine(
-      ({ company, role }) =>
-        [company, role].every((value) => (value?.trim().length ?? 0) <= 120),
-      "Company and job title must be 120 characters or fewer.",
-    )
-    .refine(
-      ({ jobUrl: value }) =>
-        !value?.trim() || httpUrl.safeParse(value.trim()).success,
-      "Enter a valid HTTP or HTTPS job posting URL.",
-    )
-    .refine(
-      ({ seniority }) => (seniority?.trim().length ?? 0) <= 120,
-      "Seniority level must be 120 characters or fewer.",
-    ),
+    .superRefine((values, ctx) => {
+      if (!values.company?.trim()) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["company"],
+          message: "Enter a company name.",
+        });
+      } else if (values.company.trim().length > 120) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["company"],
+          message: "Company name must be 120 characters or fewer.",
+        });
+      }
+      if (!values.role?.trim()) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["role"],
+          message: "Enter a job title.",
+        });
+      } else if (values.role.trim().length > 120) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["role"],
+          message: "Job title must be 120 characters or fewer.",
+        });
+      }
+      if (values.jobUrl?.trim() && !httpUrl.safeParse(values.jobUrl.trim()).success) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["jobUrl"],
+          message: "Enter a valid HTTP or HTTPS job posting URL.",
+        });
+      }
+      if ((values.seniority?.trim().length ?? 0) > 120) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["seniority"],
+          message: "Seniority level must be 120 characters or fewer.",
+        });
+      }
+    }),
   assessments: z.array(assessmentEntrySchema).max(50),
   referrals: z.array(referralEntrySchema).max(50),
   interviews: z.array(interviewEntrySchema).max(50),
   compensation: compensationSchema,
 });
+
+function extractRecordErrors(node: unknown): Record<string, string> {
+  if (!node || typeof node !== "object") return {};
+  const result: Record<string, string> = {};
+  for (const [key, value] of Object.entries(node as Record<string, unknown>)) {
+    if (
+      value &&
+      typeof value === "object" &&
+      "message" in value &&
+      typeof (value as { message?: unknown }).message === "string"
+    ) {
+      result[key] = (value as { message: string }).message;
+    }
+  }
+  return result;
+}
+
+function extractArrayErrors(node: unknown): Array<Record<string, string>> {
+  if (!Array.isArray(node)) return [];
+  return node.map((item) => extractRecordErrors(item));
+}
 
 export type EditorFormValues = z.infer<typeof editorSchema>;
 type EditorField = EditorFormValues[keyof EditorFormValues];
@@ -139,6 +188,8 @@ export function useEditorForm(job: Application | undefined, profile: Profile) {
   }));
   const form = useForm<EditorFormValues>({
     resolver: zodResolver(editorSchema),
+    mode: "onChange",
+    reValidateMode: "onChange",
     defaultValues,
   });
   const { control } = form;
@@ -148,29 +199,36 @@ export function useEditorForm(job: Application | undefined, profile: Profile) {
   const { field: interviews } = useController({ control, name: "interviews" });
   const { field: compensation } = useController({ control, name: "compensation" });
 
+  const { errors } = form.formState;
+
   return {
     handleSubmit: form.handleSubmit,
     values: values.value,
     setValues: updateField(() => form.getValues("values"), values.onChange),
+    valueErrors: extractRecordErrors(errors.values),
     assessments: assessments.value,
     setAssessments: updateField(
       () => form.getValues("assessments"),
       assessments.onChange,
     ),
+    assessmentErrors: extractArrayErrors(errors.assessments),
     referrals: referrals.value,
     setReferrals: updateField(
       () => form.getValues("referrals"),
       referrals.onChange,
     ),
+    referralErrors: extractArrayErrors(errors.referrals),
     interviews: interviews.value,
     setInterviews: updateField(
       () => form.getValues("interviews"),
       interviews.onChange,
     ),
+    interviewErrors: extractArrayErrors(errors.interviews),
     compensation: compensation.value,
     setCompensation: updateField(
       () => form.getValues("compensation"),
       compensation.onChange,
     ),
+    compensationErrors: extractRecordErrors(errors.compensation),
   };
 }

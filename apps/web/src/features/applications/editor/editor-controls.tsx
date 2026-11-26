@@ -49,17 +49,20 @@ export function FieldGrid({
   change,
   idPrefix,
   resumeVersions,
+  errors,
 }: {
   fields: Field[];
   values: Record<string, string | undefined>;
   change: (key: string, value: string, html?: string) => void;
   idPrefix: string;
   resumeVersions?: ResumeVersion[];
+  errors?: Record<string, string | undefined>;
 }) {
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
       {fields.map((field) => {
         const value = values[field.name] ?? "";
+        const fieldError = errors?.[field.name];
         const inputId = `${idPrefix}-${field.name}`;
         const isRequired =
           (idPrefix === "posting" &&
@@ -215,6 +218,7 @@ export function FieldGrid({
                 id={inputId}
                 value={value}
                 placeholder={field.placeholder}
+                aria-invalid={Boolean(fieldError)}
                 onChange={(e) => change(field.name, e.target.value)}
                 className="min-h-20 bg-background"
               />
@@ -225,11 +229,17 @@ export function FieldGrid({
                 required={isRequired}
                 value={value}
                 placeholder={field.placeholder}
+                aria-invalid={Boolean(fieldError)}
                 min={field.type === "number" ? 0 : undefined}
                 step={field.type === "number" ? "any" : undefined}
                 onChange={(e) => change(field.name, e.target.value)}
                 className="bg-background"
               />
+            )}
+            {fieldError && (
+              <p role="alert" className="text-xs font-medium text-destructive">
+                {fieldError}
+              </p>
             )}
           </div>
         );
@@ -249,6 +259,7 @@ export function EntryCollection({
   idPrefix,
   defaults,
   extra,
+  errors,
 }: {
   title: string;
   emptyTitle: string;
@@ -260,6 +271,7 @@ export function EntryCollection({
   idPrefix: string;
   defaults: Record<string, string>;
   extra?: (entry: Entry) => React.ReactNode;
+  errors?: Array<Record<string, string | undefined>>;
 }) {
   return (
     <CardFrame>
@@ -300,10 +312,16 @@ export function EntryCollection({
                 entry.employee ||
                 entry.type ||
                 `Item ${index + 1}`;
+              const entryErrors = errors?.[index];
+              const hasEntryError = Boolean(
+                entryErrors && Object.keys(entryErrors).length > 0,
+              );
               return (
                 <div
                   key={entry.id}
-                  className="flex flex-col gap-3.5 rounded-xl border border-border/80 bg-muted/25 p-4"
+                  className={`flex flex-col gap-3.5 rounded-xl border bg-muted/25 p-4 ${
+                    hasEntryError ? "border-destructive/60" : "border-border/80"
+                  }`}
                 >
                   <div className="flex items-center justify-between gap-2">
                     <span className="text-sm font-semibold text-foreground">
@@ -326,6 +344,7 @@ export function EntryCollection({
                   <FieldGrid
                     fields={fields}
                     values={entry}
+                    errors={entryErrors}
                     idPrefix={`${idPrefix}-${entry.id}`}
                     change={(key, value, html) =>
                       setEntries(

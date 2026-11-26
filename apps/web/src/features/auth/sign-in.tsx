@@ -54,6 +54,7 @@ export function SignIn({ onSignIn }: { onSignIn: (session: Session) => void }) {
   });
   const form = useForm<z.infer<typeof schema>>({
     resolver: zodResolver(schema),
+    mode: "onChange",
     defaultValues: { name: "", email: "", password: "" },
   });
   const password = useWatch({ control: form.control, name: "password" }) ?? "";
@@ -263,12 +264,18 @@ export function SignIn({ onSignIn }: { onSignIn: (session: Session) => void }) {
                     <InputGroupInput
                       id="auth-email"
                       type="email"
+                      aria-invalid={Boolean(form.formState.errors.email)}
                       {...form.register("email")}
                       autoComplete="email"
                       placeholder="you@example.com"
                       required
                     />
                   </InputGroup>
+                  {form.formState.errors.email && (
+                    <p role="alert" className="text-xs text-destructive">
+                      {form.formState.errors.email.message}
+                    </p>
+                  )}
                 </div>
 
                 <div className="flex flex-col gap-1.5">
@@ -282,6 +289,7 @@ export function SignIn({ onSignIn }: { onSignIn: (session: Session) => void }) {
                     <InputGroupInput
                       id="auth-password"
                       type="password"
+                      aria-invalid={Boolean(form.formState.errors.password)}
                       {...form.register("password")}
                       autoComplete={
                         register ? "new-password" : "current-password"
@@ -292,6 +300,11 @@ export function SignIn({ onSignIn }: { onSignIn: (session: Session) => void }) {
                       required
                     />
                   </InputGroup>
+                  {form.formState.errors.password && (
+                    <p role="alert" className="text-xs text-destructive">
+                      {form.formState.errors.password.message}
+                    </p>
+                  )}
                 </div>
 
                 {register && password && (
@@ -315,9 +328,6 @@ export function SignIn({ onSignIn }: { onSignIn: (session: Session) => void }) {
                       </li>
                     ))}
                   </ul>
-                )}
-                {(form.formState.errors.email || form.formState.errors.password) && (
-                  <p role="alert" className="text-xs text-destructive">{form.formState.errors.email?.message || form.formState.errors.password?.message}</p>
                 )}
                 {error && (
                   <div

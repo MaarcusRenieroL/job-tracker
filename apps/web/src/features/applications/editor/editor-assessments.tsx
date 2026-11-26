@@ -46,8 +46,10 @@ export function EditorAssessments({
   job,
   assessments,
   setAssessments,
+  assessmentErrors,
   interviews,
   setInterviews,
+  interviewErrors,
   prep,
   setPrep,
   pending,
@@ -57,8 +59,10 @@ export function EditorAssessments({
   job?: Application;
   assessments: Entry[];
   setAssessments: Dispatch<SetStateAction<Entry[]>>;
+  assessmentErrors?: Array<Record<string, string>>;
   interviews: Entry[];
   setInterviews: Dispatch<SetStateAction<Entry[]>>;
+  interviewErrors?: Array<Record<string, string>>;
   prep?: InterviewPrep;
   setPrep: (prep: InterviewPrep) => void;
   pending: boolean;
@@ -291,6 +295,7 @@ export function EditorAssessments({
         addLabel="Add assessment"
         entries={assessments}
         setEntries={setAssessments}
+        errors={assessmentErrors}
         fields={assessmentFields}
         idPrefix="assessment"
         defaults={{
@@ -307,6 +312,7 @@ export function EditorAssessments({
         addLabel="Add interview round"
         entries={interviews}
         setEntries={setInterviews}
+        errors={interviewErrors}
         fields={interviewFields}
         idPrefix="interview"
         defaults={{

@@ -19,6 +19,7 @@ export function EditorReferrals({
   job,
   referrals,
   setReferrals,
+  referralErrors,
   draft,
   setDraft,
   pending,
@@ -28,6 +29,7 @@ export function EditorReferrals({
   job?: Application;
   referrals: Entry[];
   setReferrals: Dispatch<SetStateAction<Entry[]>>;
+  referralErrors?: Array<Record<string, string>>;
   draft: string;
   setDraft: Dispatch<SetStateAction<string>>;
   pending: boolean;
@@ -67,6 +69,7 @@ export function EditorReferrals({
         addLabel="Add referral"
         entries={referrals}
         setEntries={setReferrals}
+        errors={referralErrors}
         fields={referralFields}
         idPrefix="referral"
         defaults={{ status: "Identified" }}
