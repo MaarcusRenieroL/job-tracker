@@ -7,7 +7,7 @@ import { Separator } from "@/components/ui/separator"
 import { Sheet, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { useSidebar } from "./context"
 
-const SIDEBAR_WIDTH_MOBILE = "18rem"
+const SIDEBAR_DRAWER_WIDTH = "18rem"
 
 export function Sidebar({
   side = "left",
@@ -22,7 +22,7 @@ export function Sidebar({
   variant?: "sidebar" | "floating" | "inset"
   collapsible?: "offcanvas" | "icon" | "none"
 }) {
-  const { isMobile, state, openMobile, setOpenMobile } = useSidebar()
+  const { isDrawer, isMobile, state, openDrawer, setOpenDrawer } = useSidebar()
 
   if (collapsible === "none") {
     return (
@@ -39,29 +39,29 @@ export function Sidebar({
     )
   }
 
-  if (isMobile) {
+  if (isDrawer) {
     return (
       <Sheet
-        isOpen={openMobile}
-        onOpenChange={setOpenMobile}
+        isOpen={openDrawer}
+        onOpenChange={setOpenDrawer}
         dir={dir}
         data-sidebar="sidebar"
         data-slot="sidebar"
-        data-mobile="true"
-        className="w-(--sidebar-width) bg-sidebar p-0 text-sidebar-foreground [&>button]:hidden"
+        data-mobile={isMobile}
+        className="w-(--sidebar-width) max-w-[calc(100vw-2rem)] bg-sidebar p-0 text-sidebar-foreground"
         style={
           {
-            "--sidebar-width": SIDEBAR_WIDTH_MOBILE,
+            "--sidebar-width": SIDEBAR_DRAWER_WIDTH,
           } as React.CSSProperties
         }
         side={side}
         {...props}
       >
         <SheetHeader className="sr-only">
-          <SheetTitle>Sidebar</SheetTitle>
-          <SheetDescription>Displays the mobile sidebar.</SheetDescription>
+          <SheetTitle>Workspace navigation</SheetTitle>
+          <SheetDescription>Pages, shortcuts, and account settings.</SheetDescription>
         </SheetHeader>
-        <div className="flex h-full w-full flex-col">{children}</div>
+        <div className="flex h-full min-h-0 w-full flex-col">{children}</div>
       </Sheet>
     )
   }

@@ -22,7 +22,7 @@ import {
   SidebarMenuBadge,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarRail,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import { formatRelativeDays } from "@/lib/format";
 import {
@@ -31,8 +31,8 @@ import {
   BriefcaseBusiness,
   CalendarClock,
   ChevronsUpDown,
-  LogOut,
   FileUser,
+  LogOut,
   Moon,
   Plus,
   Search,
@@ -72,15 +72,22 @@ export function WorkspaceSidebar({
   setCommandOpen: (open: boolean) => void;
   openApplicationById: (id: string) => void;
 }) {
+  const { setOpenDrawer } = useSidebar();
+
+  function navigate(action: () => void) {
+    setOpenDrawer(false);
+    action();
+  }
+
   return (
-    <Sidebar variant="inset" collapsible="icon">
+    <Sidebar>
       <SidebarHeader className="gap-2.5 p-2.5">
         <div className="flex items-center justify-between gap-2 px-1">
           <div className="flex items-center gap-2.5 overflow-hidden">
             <div className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-xs">
               <BriefcaseBusiness className="size-3.5" />
             </div>
-            <div className="flex min-w-0 flex-col group-data-[collapsible=icon]:hidden">
+            <div className="flex min-w-0 flex-col">
               <span className="truncate text-sm font-semibold tracking-tight text-sidebar-foreground">
                 Job Tracker
               </span>
@@ -91,11 +98,11 @@ export function WorkspaceSidebar({
           </div>
         </div>
 
-        <div className="flex flex-col gap-1.5 group-data-[collapsible=icon]:hidden">
+        <div className="flex flex-col gap-1.5">
           <Button
             size="sm"
             className="w-full justify-between"
-            onPress={() => openEditor("new")}
+            onPress={() => navigate(() => openEditor("new"))}
           >
             <span className="inline-flex items-center gap-1.5">
               <Plus className="size-3.5" /> New application
@@ -108,7 +115,7 @@ export function WorkspaceSidebar({
             variant="outline"
             size="sm"
             className="w-full justify-between bg-background/80 text-muted-foreground font-normal"
-            onPress={() => setCommandOpen(true)}
+            onPress={() => navigate(() => setCommandOpen(true))}
           >
             <span className="inline-flex items-center gap-1.5">
               <Search className="size-3.5" /> Search &amp; jump…
@@ -127,7 +134,7 @@ export function WorkspaceSidebar({
                 <SidebarMenuButton
                   isActive={page === "applications"}
                   tooltip="Applications"
-                  onPress={() => setPage("applications")}
+                  onPress={() => navigate(() => setPage("applications"))}
                 >
                   <BriefcaseBusiness />
                   <span>Applications</span>
@@ -139,7 +146,7 @@ export function WorkspaceSidebar({
                 <SidebarMenuButton
                   isActive={page === "agenda"}
                   tooltip="Agenda"
-                  onPress={() => setPage("agenda")}
+                  onPress={() => navigate(() => setPage("agenda"))}
                 >
                   <CalendarClock />
                   <span>Agenda</span>
@@ -151,7 +158,7 @@ export function WorkspaceSidebar({
                 <SidebarMenuButton
                   isActive={page === "offers"}
                   tooltip="Offers"
-                  onPress={() => setPage("offers")}
+                  onPress={() => navigate(() => setPage("offers"))}
                 >
                   <Award />
                   <span>Offers</span>
@@ -163,7 +170,7 @@ export function WorkspaceSidebar({
                 <SidebarMenuButton
                   isActive={page === "analytics"}
                   tooltip="Analytics"
-                  onPress={() => setPage("analytics")}
+                  onPress={() => navigate(() => setPage("analytics"))}
                 >
                   <BarChart3 />
                   <span>Analytics</span>
@@ -174,7 +181,7 @@ export function WorkspaceSidebar({
         </SidebarGroup>
 
         {agenda.length > 0 && (
-          <SidebarGroup className="mt-auto group-data-[collapsible=icon]:hidden">
+          <SidebarGroup className="mt-auto">
             <SidebarGroupLabel className="justify-between">
               <span>Next Deadlines</span>
               <span className="tabular-nums text-xs">{agenda.length}</span>
@@ -185,7 +192,9 @@ export function WorkspaceSidebar({
                   <button
                     key={event.id}
                     type="button"
-                    onClick={() => openApplicationById(event.applicationId)}
+                    onClick={() =>
+                      navigate(() => openApplicationById(event.applicationId))
+                    }
                     className="flex flex-col gap-0.5 px-3 py-2 text-left transition-colors first:rounded-t-xl last:rounded-b-xl hover:bg-sidebar-accent/70"
                   >
                     <div className="flex items-center justify-between gap-2">
@@ -220,7 +229,7 @@ export function WorkspaceSidebar({
                     {session.email.slice(0, 2)}
                   </AvatarFallback>
                 </Avatar>
-                <div className="grid flex-1 text-left text-xs leading-tight group-data-[collapsible=icon]:hidden">
+                <div className="grid flex-1 text-left text-xs leading-tight">
                   <span className="truncate font-medium text-sidebar-foreground">
                     {session.email}
                   </span>
@@ -228,7 +237,7 @@ export function WorkspaceSidebar({
                     Local session active
                   </span>
                 </div>
-                <ChevronsUpDown className="ml-auto size-4 text-muted-foreground group-data-[collapsible=icon]:hidden" />
+                <ChevronsUpDown className="ml-auto size-4 text-muted-foreground" />
               </SidebarMenuButton>
               <DropdownMenu placement="top start" className="min-w-56">
                 <DropdownMenuLabel className="truncate">
@@ -237,13 +246,13 @@ export function WorkspaceSidebar({
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   textValue="New application"
-                  onAction={() => openEditor("new")}
+                  onAction={() => navigate(() => openEditor("new"))}
                 >
                   <Plus className="size-4" /> New application
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   textValue="Command palette"
-                  onAction={() => setCommandOpen(true)}
+                  onAction={() => navigate(() => setCommandOpen(true))}
                 >
                   <Search className="size-4" /> Command palette
                 </DropdownMenuItem>
@@ -260,7 +269,12 @@ export function WorkspaceSidebar({
                   )}
                   {dark ? "Switch to light mode" : "Switch to dark mode"}
                 </DropdownMenuItem>
-                <DropdownMenuItem textValue="Profile and resume" onAction={onEditProfile}><FileUser className="size-4" /> Profile &amp; resume</DropdownMenuItem>
+                <DropdownMenuItem
+                  textValue="Profile and resume"
+                  onAction={() => navigate(onEditProfile)}
+                >
+                  <FileUser className="size-4" /> Profile &amp; resume
+                </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   textValue="Sign out"
@@ -274,7 +288,6 @@ export function WorkspaceSidebar({
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>
-      <SidebarRail />
     </Sidebar>
   );
 }

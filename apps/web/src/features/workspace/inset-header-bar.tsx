@@ -20,8 +20,8 @@ export function InsetHeaderBar({
   onOpenCommand: () => void;
   onNewApplication: () => void;
 }) {
-  const { state, isMobile } = useSidebar();
-  const showQuickTriggers = isMobile || state === "collapsed";
+  const { state, isDrawer } = useSidebar();
+  const showQuickTriggers = isDrawer || state === "collapsed";
 
   return (
     <header className="sticky top-0 z-20 flex h-12 shrink-0 items-center justify-between gap-3 border-b border-border/70 bg-background/85 px-4 backdrop-blur-md lg:px-6">
@@ -29,7 +29,7 @@ export function InsetHeaderBar({
         aria-label="Breadcrumb"
         className="flex min-w-0 items-center gap-2 text-xs"
       >
-        <SidebarTrigger />
+        <SidebarTrigger aria-label="Open workspace navigation" />
         <Separator orientation="vertical" className="h-4" />
         <span className="hidden text-muted-foreground sm:inline">
           Workspace

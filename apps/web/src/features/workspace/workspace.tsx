@@ -161,7 +161,7 @@ export function Workspace({
   }
 
   return (
-    <SidebarProvider>
+    <SidebarProvider overlay>
       <WorkspaceSidebar
         page={page}
         setPage={setPage}
@@ -178,7 +178,7 @@ export function Workspace({
         openApplicationById={openApplicationById}
       />
 
-      <SidebarInset className="min-w-0 overflow-x-hidden md:peer-data-[variant=inset]:ring-1 md:peer-data-[variant=inset]:ring-border/70">
+      <SidebarInset className="min-w-0 overflow-x-hidden">
         <InsetHeaderBar
           title={pageMeta[page].title}
           countText={

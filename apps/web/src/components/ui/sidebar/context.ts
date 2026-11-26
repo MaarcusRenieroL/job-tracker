@@ -4,9 +4,10 @@ export type SidebarContextProps = {
   state: "expanded" | "collapsed"
   open: boolean
   setOpen: (open: boolean) => void
-  openMobile: boolean
-  setOpenMobile: (open: boolean) => void
+  openDrawer: boolean
+  setOpenDrawer: (open: boolean) => void
   isMobile: boolean
+  isDrawer: boolean
   toggleSidebar: () => void
 }
 

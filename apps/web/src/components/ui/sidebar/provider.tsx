@@ -11,6 +11,7 @@ const SIDEBAR_KEYBOARD_SHORTCUT = "b"
 
 export function SidebarProvider({
   defaultOpen = true,
+  overlay = false,
   open: openProp,
   onOpenChange: setOpenProp,
   className,
@@ -19,11 +20,13 @@ export function SidebarProvider({
   ...props
 }: React.ComponentProps<"div"> & {
   defaultOpen?: boolean
+  overlay?: boolean
   open?: boolean
   onOpenChange?: (open: boolean) => void
 }) {
   const isMobile = useIsMobile()
-  const [openMobile, setOpenMobile] = React.useState(false)
+  const isDrawer = overlay || isMobile
+  const [openDrawer, setOpenDrawer] = React.useState(false)
 
   // This is the internal state of the sidebar.
   // We use openProp and setOpenProp for control from outside the component.
@@ -46,8 +49,8 @@ export function SidebarProvider({
 
   // Helper to toggle the sidebar.
   const toggleSidebar = React.useCallback(() => {
-    return isMobile ? setOpenMobile((open) => !open) : setOpen((open) => !open)
-  }, [isMobile, setOpen, setOpenMobile])
+    return isDrawer ? setOpenDrawer((open) => !open) : setOpen((open) => !open)
+  }, [isDrawer, setOpen])
 
   // Adds a keyboard shortcut to toggle the sidebar.
   React.useEffect(() => {
@@ -75,11 +78,12 @@ export function SidebarProvider({
       open,
       setOpen,
       isMobile,
-      openMobile,
-      setOpenMobile,
+      isDrawer,
+      openDrawer,
+      setOpenDrawer,
       toggleSidebar,
     }),
-    [state, open, setOpen, isMobile, openMobile, setOpenMobile, toggleSidebar]
+    [state, open, setOpen, isMobile, isDrawer, openDrawer, setOpenDrawer, toggleSidebar]
   )
 
   return (
