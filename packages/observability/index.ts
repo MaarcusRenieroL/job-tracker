@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { swaggerUI } from "@hono/swagger-ui";
+import { Scalar } from "@scalar/hono-api-reference";
 import {
   propagation,
   ROOT_CONTEXT,
@@ -168,16 +169,28 @@ export function registerApiDocs<TEnv extends object>(
     spec,
     guideHtml,
     basePath = "",
+    title = "Job Tracker API Reference",
   }: {
     spec: Record<string, unknown>;
     guideHtml?: string;
     basePath?: string;
+    title?: string;
   },
 ) {
   const prefix = basePath.replace(/\/+$/, "");
   const specPath = `${prefix}/openapi.json`;
   app.get(specPath, (c) => c.json(spec));
-  app.get(`${prefix}/docs`, swaggerUI({ url: specPath }));
+  app.get(
+    `${prefix}/docs`,
+    Scalar({
+      url: specPath,
+      pageTitle: title,
+      theme: "saturn",
+      layout: "modern",
+      defaultHttpClient: { targetKey: "shell", clientKey: "curl" },
+    }),
+  );
+  app.get(`${prefix}/swagger`, swaggerUI({ url: specPath }));
   if (guideHtml) {
     app.get(`${prefix}/guide`, (c) => c.html(guideHtml));
   }

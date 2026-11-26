@@ -9,6 +9,7 @@
     "@opentelemetry/exporter-trace-otlp-http": "^0.301.2",
     "@opentelemetry/sdk-node": "^0.301.2",
     "@prometheus-io/client": "^0.16.1",
+    "@scalar/hono-api-reference": "^0.12.24",
     "hono": "^4.13.21",
     "pino": "^10.4.0"
   }

@@ -43,8 +43,8 @@ Once running:
 
 - **Web App:** [http://localhost:5173](http://localhost:5173)
 - **Usage Guide:** [http://localhost:5173/guide](http://localhost:5173/guide)
-- **Tracker Swagger UI:** [http://localhost:5173/docs](http://localhost:5173/docs)
-- **Auth Swagger UI:** [http://localhost:5173/auth/docs](http://localhost:5173/auth/docs)
+- **Tracker API Reference (Scalar OpenAPI 3.1):** [http://localhost:5173/docs](http://localhost:5173/docs)
+- **Auth API Reference (Scalar OpenAPI 3.1):** [http://localhost:5173/auth/docs](http://localhost:5173/auth/docs)
 - **Prometheus / Jaeger:** [http://127.0.0.1:9090](http://127.0.0.1:9090) · [http://127.0.0.1:16686](http://127.0.0.1:16686)
 
 Stop with `docker compose down` (data persists in Docker volumes). Run `pnpm run ci` locally for lint, typecheck, tests, and production builds.
