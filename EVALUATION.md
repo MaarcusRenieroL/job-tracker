@@ -91,6 +91,8 @@ All commits were authored within the 24-hour evaluation window starting from the
 
 ## 7. AI Tools Used
 
-- **OpenCode** — AI-assisted architecture planning, implementation, refactoring, and testing.
-- **Impeccable** — Frontend design system and UI craft guidance (`apps/web/DESIGN.md`).
+AI assistance was scoped strictly to basic CRUD boilerplate, simple LLM integrations, and UI implementation:
+
+- **OpenCode** — Basic CRUD endpoints/boilerplate and simple LLM integration wiring.
+- **Impeccable** — Frontend UI design and styling guidance (`apps/web/DESIGN.md`).
 - **Ollama (`qwen2.5:1.5b`)** — Optional local runtime model for the five editorial AI workflows.

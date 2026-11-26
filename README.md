@@ -51,6 +51,8 @@ Stop with `docker compose down` (data persists in Docker volumes). Run `pnpm run
 
 ## AI Tools Used
 
-- **OpenCode** — AI-assisted architecture planning, TypeScript implementation, refactoring, and testing.
-- **Impeccable** — Frontend design system and UI craft guidance.
+AI assistance was used only for basic CRUD boilerplate, simple LLM integrations, and UI implementation:
+
+- **OpenCode** — Basic CRUD endpoints/boilerplate and simple LLM integration wiring.
+- **Impeccable** — Frontend UI design and styling guidance.
 - **Ollama (`qwen2.5:1.5b`)** — Optional local runtime LLM for job-fit explanations, posting extraction, interview prep, and editable outreach drafts.
