@@ -25,10 +25,9 @@ import {
   Trash2,
   Users,
 } from "lucide-react";
-import { useState, type FormEvent } from "react";
+import { useState } from "react";
 import type {
   Application,
-  Entry,
   Match,
   Priority,
   Stage,
@@ -38,8 +37,8 @@ import { EditorAssessments } from "./editor-assessments";
 import { EditorOffer } from "./editor-offer";
 import { EditorOverview } from "./editor-overview";
 import { EditorReferrals } from "./editor-referrals";
-import { applicationPayload, initialFields, localDateTime } from "./editor-form";
-
+import { applicationPayload } from "./editor-form";
+import { useEditorForm } from "./use-editor-form";
 
 export type EditorTab =
   "overview" | "assessments" | "referrals" | "offer" | "match" | "history";
@@ -64,31 +63,19 @@ export function EditorSheet({
   remove: () => Promise<void>;
 }) {
   const [activeTab, setActiveTab] = useState<EditorTab>(initialTab);
-  const [values, setValues] = useState(() => {
-    const fields = initialFields(job);
-    if (!job) fields.resumeText = profile.resumeText;
-    return fields;
-  });
-  const [assessments, setAssessments] = useState<Entry[]>(
-    () => job?.assessments ?? [],
-  );
-  const [referrals, setReferrals] = useState<Entry[]>(
-    () => job?.referrals ?? [],
-  );
-  const [interviews, setInterviews] = useState<Entry[]>(() =>
-    (job?.interviews ?? []).map((entry) => ({
-      ...entry,
-      dateTime: entry.dateTime ? localDateTime(entry.dateTime) : "",
-    })),
-  );
-  const [compensation, setCompensation] = useState<Record<string, string>>(() =>
-    Object.fromEntries(
-      Object.entries(job?.offer ?? {}).map(([key, value]) => [
-        key,
-        String(value),
-      ]),
-    ),
-  );
+  const {
+    handleSubmit,
+    values,
+    setValues,
+    assessments,
+    setAssessments,
+    referrals,
+    setReferrals,
+    interviews,
+    setInterviews,
+    compensation,
+    setCompensation,
+  } = useEditorForm(job, profile.resumeText);
   const [match, setMatch] = useState<Match>();
   const [draft, setDraft] = useState("");
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -107,13 +94,18 @@ export function EditorSheet({
     }
   }
 
-  function submit(event: FormEvent) {
-    event.preventDefault();
-    void run(async () => {
-      const body = applicationPayload({ job, values, assessments, referrals, interviews, compensation });
-      await save(body);
-    });
-  }
+  const submit = handleSubmit(
+    (input) => run(() => save(applicationPayload({ job, ...input }))),
+    (issues) => {
+      setActiveTab("overview");
+      const message = issues.values?.message;
+      setError(
+        typeof message === "string"
+          ? message
+          : "Check the application details and try again.",
+      );
+    },
+  );
 
   const parsedTagPreview = values.tags
     .split(",")
@@ -131,6 +123,7 @@ export function EditorSheet({
       className="gap-0 p-0 data-[side=right]:w-full data-[side=right]:sm:max-w-2xl"
     >
       <form
+        noValidate
         onSubmit={submit}
         className="flex h-full max-h-dvh flex-col overflow-hidden"
       >
