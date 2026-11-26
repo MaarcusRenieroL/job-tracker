@@ -24,7 +24,6 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
-import { formatCurrency } from "@/lib/format";
 import {
   Award,
   BriefcaseBusiness,
@@ -48,13 +47,12 @@ import type {
 import { EntryCollection, FieldGrid } from "./editor-controls";
 import {
   applicationFields,
-  assessmentFields,
-  interviewFields,
-  offerFields,
   postingFields,
   referralFields,
 } from "./editor-fields";
 import { EditorMatch } from "./editor-match";
+import { EditorAssessments } from "./editor-assessments";
+import { EditorOffer } from "./editor-offer";
 
 const clearableKeys = [
   "jobUrl",
@@ -248,10 +246,6 @@ export function EditorSheet({
     .map((t) => t.trim())
     .filter(Boolean);
 
-  const liveOfferTotal =
-    (Number(compensation.base) || 0) +
-    (Number(compensation.bonus) || 0) +
-    (Number(compensation.equity) || 0);
 
   return (
     <Sheet
@@ -533,39 +527,7 @@ export function EditorSheet({
               </CardFrame>
             </TabsContent>
 
-            <TabsContent id="assessments" className="flex flex-col gap-5">
-              <EntryCollection
-                title="Technical & Online Assessments"
-                emptyTitle="No assessments logged"
-                emptyDescription="Track coding challenges, online assessments, and take-home repositories with due dates."
-                addLabel="Add assessment"
-                entries={assessments}
-                setEntries={setAssessments}
-                fields={assessmentFields}
-                idPrefix="assessment"
-                defaults={{
-                  title: "",
-                  type: "Online assessment",
-                  status: "Not started",
-                }}
-              />
-
-              <EntryCollection
-                title="Interview Rounds"
-                emptyTitle="No interview rounds scheduled"
-                emptyDescription="Log recruiter screens, technical rounds, system design sessions, and debrief notes."
-                addLabel="Add interview round"
-                entries={interviews}
-                setEntries={setInterviews}
-                fields={interviewFields}
-                idPrefix="interview"
-                defaults={{
-                  type: "Recruiter screening",
-                  result: "Scheduled",
-                  dateTime: "",
-                }}
-              />
-            </TabsContent>
+            <EditorAssessments assessments={assessments} setAssessments={setAssessments} interviews={interviews} setInterviews={setInterviews} />
 
             <TabsContent id="referrals" className="flex flex-col gap-5">
               <EntryCollection
@@ -635,50 +597,7 @@ export function EditorSheet({
               )}
             </TabsContent>
 
-            <TabsContent id="offer" className="flex flex-col gap-5">
-              {compensation.currency?.trim() && liveOfferTotal > 0 && (
-                <CardFrame>
-                  <CardFrameHeader>
-                    <CardFrameTitle>
-                      Package Preview (
-                      {compensation.currency.trim().toUpperCase()})
-                    </CardFrameTitle>
-                  </CardFrameHeader>
-                  <CardFramePanel className="flex items-baseline justify-between p-4">
-                    <span className="text-xs text-muted-foreground">
-                      Total recorded compensation
-                    </span>
-                    <span className="text-2xl font-semibold tracking-tight tabular-nums">
-                      {formatCurrency(
-                        liveOfferTotal,
-                        compensation.currency.trim(),
-                      )}
-                    </span>
-                  </CardFramePanel>
-                </CardFrame>
-              )}
-
-              <CardFrame>
-                <CardFrameHeader>
-                  <CardFrameTitle>
-                    Offer &amp; Compensation Package
-                  </CardFrameTitle>
-                </CardFrameHeader>
-                <CardFramePanel className="p-4">
-                  <FieldGrid
-                    fields={offerFields}
-                    values={compensation}
-                    change={(key, value) =>
-                      setCompensation((previous) => ({
-                        ...previous,
-                        [key]: value,
-                      }))
-                    }
-                    idPrefix="offer"
-                  />
-                </CardFramePanel>
-              </CardFrame>
-            </TabsContent>
+            <EditorOffer compensation={compensation} setCompensation={setCompensation} />
 
             {job && (
               <EditorMatch
