@@ -67,6 +67,8 @@ export function EditorSheet({
   const [activeTab, setActiveTab] = useState<EditorTab>(initialTab);
   const {
     handleSubmit,
+    isValid,
+    isDirty,
     values,
     setValues,
     onBlurValues,
@@ -141,6 +143,15 @@ export function EditorSheet({
     .map((t) => t.trim())
     .filter(Boolean);
 
+
+  const hasOverviewErrors = Object.keys(valueErrors).length > 0;
+  const hasRoundsErrors =
+    assessmentErrors.some((entry) => Object.keys(entry).length > 0) ||
+    interviewErrors.some((entry) => Object.keys(entry).length > 0);
+  const hasReferralErrors = referralErrors.some(
+    (entry) => Object.keys(entry).length > 0,
+  );
+  const hasOfferErrors = Object.keys(compensationErrors).length > 0;
 
   return (
     <Sheet
@@ -220,6 +231,9 @@ export function EditorSheet({
             >
               <TabsTrigger id="overview" className="flex-none px-1 text-xs">
                 <BriefcaseBusiness className="size-3.5" /> Overview
+                {hasOverviewErrors && (
+                  <span className="size-1.5 rounded-full bg-destructive" aria-label="Has validation errors" />
+                )}
               </TabsTrigger>
               <TabsTrigger id="assessments" className="flex-none px-1 text-xs">
                 <ClipboardCheck className="size-3.5" /> Rounds &amp; OAs
@@ -229,6 +243,9 @@ export function EditorSheet({
                 >
                   {assessments.length + interviews.length}
                 </Badge>
+                {hasRoundsErrors && (
+                  <span className="size-1.5 rounded-full bg-destructive" aria-label="Has validation errors" />
+                )}
               </TabsTrigger>
               <TabsTrigger id="referrals" className="flex-none px-1 text-xs">
                 <Users className="size-3.5" /> Referrals
@@ -238,9 +255,15 @@ export function EditorSheet({
                 >
                   {referrals.length}
                 </Badge>
+                {hasReferralErrors && (
+                  <span className="size-1.5 rounded-full bg-destructive" aria-label="Has validation errors" />
+                )}
               </TabsTrigger>
               <TabsTrigger id="offer" className="flex-none px-1 text-xs">
                 <Award className="size-3.5" /> Offer
+                {hasOfferErrors && (
+                  <span className="size-1.5 rounded-full bg-destructive" aria-label="Has validation errors" />
+                )}
               </TabsTrigger>
               {job && (
                 <TabsTrigger id="match" className="flex-none px-1 text-xs">
@@ -354,7 +377,11 @@ export function EditorSheet({
             <Button type="button" variant="outline" size="sm" onPress={close}>
               Cancel
             </Button>
-            <Button type="submit" size="sm" isDisabled={pending}>
+            <Button
+              type="submit"
+              size="sm"
+              isDisabled={pending || !isValid || (Boolean(job) && !isDirty)}
+            >
               {pending
                 ? "Saving…"
                 : job

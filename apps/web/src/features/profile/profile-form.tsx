@@ -60,7 +60,7 @@ export function ProfileForm({
     control,
     setValue,
     handleSubmit,
-    formState: { errors, isSubmitting },
+    formState: { errors, isSubmitting, isValid },
   } = useForm<Profile>({
     resolver: zodResolver(schema),
     mode: "onTouched",
@@ -275,7 +275,7 @@ export function ProfileForm({
       )}
 
       <div className="flex flex-wrap items-center gap-3">
-        <Button type="submit" isDisabled={uploading || isSubmitting}>
+        <Button type="submit" isDisabled={uploading || isSubmitting || !isValid}>
           {uploading
             ? "Reading resume…"
             : isSubmitting

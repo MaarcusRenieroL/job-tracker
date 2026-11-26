@@ -42,7 +42,7 @@ export function UrlImportCard({
   const {
     register,
     handleSubmit,
-    formState: { errors },
+    formState: { errors, isValid },
   } = useForm<ImportUrlForm>({
     resolver: zodResolver(importUrlSchema),
     mode: "onTouched",
@@ -91,7 +91,7 @@ export function UrlImportCard({
           <Button
             type="button"
             variant="outline"
-            isDisabled={pending}
+            isDisabled={pending || !isValid}
             onPress={() => void submitImport()}
           >
             Import

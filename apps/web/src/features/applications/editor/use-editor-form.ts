@@ -199,10 +199,12 @@ export function useEditorForm(job: Application | undefined, profile: Profile) {
   const { field: interviews } = useController({ control, name: "interviews" });
   const { field: compensation } = useController({ control, name: "compensation" });
 
-  const { errors } = form.formState;
+  const { errors, isValid, isDirty } = form.formState;
 
   return {
     handleSubmit: form.handleSubmit,
+    isValid,
+    isDirty,
     values: values.value,
     setValues: updateField(() => form.getValues("values"), values.onChange),
     onBlurValues: values.onBlur,

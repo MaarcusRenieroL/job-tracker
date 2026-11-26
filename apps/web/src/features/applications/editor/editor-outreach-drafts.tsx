@@ -56,7 +56,7 @@ export function OutreachDraftsCard({
   const {
     register,
     handleSubmit,
-    formState: { errors },
+    formState: { errors, isValid },
   } = useForm<FollowUpOptionsForm>({
     resolver: zodResolver(followUpOptionsSchema),
     mode: "onTouched",
@@ -131,7 +131,7 @@ export function OutreachDraftsCard({
               type="button"
               variant="outline"
               size="xs"
-              isDisabled={pending}
+              isDisabled={pending || !isValid}
               onPress={() => void submitFollowUp()}
             >
               {draftingKind === "follow-up" ? (

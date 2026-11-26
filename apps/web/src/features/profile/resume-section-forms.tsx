@@ -42,14 +42,16 @@ function FieldError({ message }: { message?: string }) {
 function SectionSaveButton({
   saving,
   saved,
+  disabled = false,
   label = "Save section",
 }: {
   saving: boolean;
   saved: boolean;
+  disabled?: boolean;
   label?: string;
 }) {
   return (
-    <Button type="submit" size="xs" isDisabled={saving}>
+    <Button type="submit" size="xs" isDisabled={saving || disabled}>
       {saving ? (
         "Saving…"
       ) : saved ? (
@@ -75,7 +77,7 @@ export function BasicsSectionForm({
     register,
     reset,
     handleSubmit,
-    formState: { errors, isSubmitting },
+    formState: { errors, isSubmitting, isValid, isDirty },
   } = useForm<BasicsSection>({
     resolver: zodResolver(basicsSectionSchema),
     mode: "onTouched",
@@ -97,7 +99,7 @@ export function BasicsSectionForm({
       <CardFrame>
         <CardFrameHeader>
           <CardFrameTitle>Profile &amp; Contact Information</CardFrameTitle>
-          <SectionSaveButton saving={isSubmitting} saved={saved} />
+          <SectionSaveButton saving={isSubmitting} saved={saved} disabled={!isValid || !isDirty} />
         </CardFrameHeader>
         <CardFramePanel className="grid grid-cols-1 gap-3.5 p-4 sm:grid-cols-2">
           <div className="flex flex-col gap-1.5">
@@ -190,7 +192,7 @@ export function SummarySectionForm({
     register,
     reset,
     handleSubmit,
-    formState: { errors, isSubmitting },
+    formState: { errors, isSubmitting, isValid, isDirty },
   } = useForm<SummarySection>({
     resolver: zodResolver(summarySectionSchema),
     mode: "onTouched",
@@ -212,7 +214,7 @@ export function SummarySectionForm({
       <CardFrame>
         <CardFrameHeader>
           <CardFrameTitle>Professional Summary</CardFrameTitle>
-          <SectionSaveButton saving={isSubmitting} saved={saved} />
+          <SectionSaveButton saving={isSubmitting} saved={saved} disabled={!isValid || !isDirty} />
         </CardFrameHeader>
         <CardFramePanel className="flex flex-col gap-1.5 p-4">
           <Label htmlFor="summary-text" className="text-xs font-medium">
@@ -244,7 +246,7 @@ export function SkillsSectionForm({
     register,
     reset,
     handleSubmit,
-    formState: { errors, isSubmitting },
+    formState: { errors, isSubmitting, isValid, isDirty },
   } = useForm<SkillsSection>({
     resolver: zodResolver(skillsSectionSchema),
     mode: "onTouched",
@@ -266,7 +268,7 @@ export function SkillsSectionForm({
       <CardFrame>
         <CardFrameHeader>
           <CardFrameTitle>Skills &amp; Technologies</CardFrameTitle>
-          <SectionSaveButton saving={isSubmitting} saved={saved} />
+          <SectionSaveButton saving={isSubmitting} saved={saved} disabled={!isValid || !isDirty} />
         </CardFrameHeader>
         <CardFramePanel className="flex flex-col gap-1.5 p-4">
           <Label htmlFor="skills-text" className="text-xs font-medium">
@@ -299,7 +301,7 @@ export function ExperienceSectionForm({
     control,
     reset,
     handleSubmit,
-    formState: { errors, isSubmitting },
+    formState: { errors, isSubmitting, isValid, isDirty },
   } = useForm<ExperienceSection>({
     resolver: zodResolver(experienceSectionSchema),
     mode: "onTouched",
@@ -345,7 +347,7 @@ export function ExperienceSectionForm({
             >
               <Plus className="size-3" /> Add role
             </Button>
-            <SectionSaveButton saving={isSubmitting} saved={saved} />
+            <SectionSaveButton saving={isSubmitting} saved={saved} disabled={!isValid || !isDirty} />
           </div>
         </CardFrameHeader>
         <CardFramePanel className="flex flex-col gap-3.5 p-4">
@@ -471,7 +473,7 @@ export function ProjectsSectionForm({
     control,
     reset,
     handleSubmit,
-    formState: { errors, isSubmitting },
+    formState: { errors, isSubmitting, isValid, isDirty },
   } = useForm<ProjectsSection>({
     resolver: zodResolver(projectsSectionSchema),
     mode: "onTouched",
@@ -511,7 +513,7 @@ export function ProjectsSectionForm({
             >
               <Plus className="size-3" /> Add project
             </Button>
-            <SectionSaveButton saving={isSubmitting} saved={saved} />
+            <SectionSaveButton saving={isSubmitting} saved={saved} disabled={!isValid || !isDirty} />
           </div>
         </CardFrameHeader>
         <CardFramePanel className="flex flex-col gap-3.5 p-4">
@@ -623,7 +625,7 @@ export function EducationSectionForm({
     control,
     reset,
     handleSubmit,
-    formState: { errors, isSubmitting },
+    formState: { errors, isSubmitting, isValid, isDirty },
   } = useForm<EducationSection>({
     resolver: zodResolver(educationSectionSchema),
     mode: "onTouched",
@@ -663,7 +665,7 @@ export function EducationSectionForm({
             >
               <Plus className="size-3" /> Add education
             </Button>
-            <SectionSaveButton saving={isSubmitting} saved={saved} />
+            <SectionSaveButton saving={isSubmitting} saved={saved} disabled={!isValid || !isDirty} />
           </div>
         </CardFrameHeader>
         <CardFramePanel className="flex flex-col gap-3.5 p-4">
@@ -776,7 +778,7 @@ export function CertificationsSectionForm({
     control,
     reset,
     handleSubmit,
-    formState: { errors, isSubmitting },
+    formState: { errors, isSubmitting, isValid, isDirty },
   } = useForm<CertificationsSection>({
     resolver: zodResolver(certificationsSectionSchema),
     mode: "onTouched",
@@ -814,7 +816,7 @@ export function CertificationsSectionForm({
             >
               <Plus className="size-3" /> Add item
             </Button>
-            <SectionSaveButton saving={isSubmitting} saved={saved} />
+            <SectionSaveButton saving={isSubmitting} saved={saved} disabled={!isValid || !isDirty} />
           </div>
         </CardFrameHeader>
         <CardFramePanel className="flex flex-col gap-3 p-4">

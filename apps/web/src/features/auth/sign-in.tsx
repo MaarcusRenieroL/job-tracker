@@ -372,7 +372,7 @@ export function SignIn({ onSignIn }: { onSignIn: (session: Session) => void }) {
                 <Button
                   type="submit"
                   size="lg"
-                  isDisabled={pending}
+                  isDisabled={pending || !form.formState.isValid}
                   className="mt-2 w-full justify-center gap-2 font-semibold"
                 >
                   <span>
